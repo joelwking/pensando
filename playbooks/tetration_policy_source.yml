@@ -32,7 +32,9 @@
           - 192.0.2.0/24
 
     acl_action: {"ALLOW": "permit", "DROP": "deny"}
+    acl_protocol: {1: "icmp", 6: "tcp", 17 : "udp"}
     pseudo_acl: []
+    l4_params: []
 
   collections:
     - joelwking.pensando
@@ -58,22 +60,45 @@
       tags: [tetration]
 
     - debug:
-        msg: '{{ item }}'
-        verbosity: 2
-      loop: '{{ api.ansible_facts.adm.policy }}'
+        msg: '{{ item.l4_params }}'
+        # verbosity: 2
+      loop: '{{ api.ansible_facts.adm.raw.default_policies }}'
+      tags: [tetration]
 
-      # Each item contains
-      # {u'confidence': 0.95, u'ether_type': u'ip', u'proto': u'tcp', u'consumer_filter_name': u'EPG-DEV-PUBWIN1', 
-      # u'provider_filter_name': u'Default:cluster', u'priority': 100, u'action': u'ALLOW', u'ports': {u'to': 22, u'from': 22}}
+      # Each item contains:
+      # {u'l4_params': 
+      #   [{u'confidence': 0.81, u'approved': False, u'proto': 1}, 
+      #   {u'confidence': 0.97, u'proto': 17, u'approved': False, u'port': [53, 53]}, 
+      #   {u'confidence': 0.99, u'proto': 17, u'approved': False, u'port': [123, 123]}, 
+      #   {u'confidence': 0.96, u'proto': 6, u'approved': False, u'port': [80, 80]}, 
+      #   {u'confidence': 1.0, u'proto': 6, u'approved': False, u'port': [443, 443]}, 
+      #   {u'confidence': 0.97, u'proto': 6, u'approved': False, u'port': [5660, 5660]}], 
+      # u'__internal_security_posture': 2.0, u'consumer_filter_id': u'5d936e14755f026b380a4247', 
+      # u'provider_filter_name': u'EPG-DEV-PUBWIN1', u'priority': 100, u'__internal_src_risk_exposure': 2.0, 
+      # u'consumer_filter_name': u'Default:cluster', 
+      # u'action': u'ALLOW', u'provider_filter_id': u'5bcf5c99755f025b0a919850', 
+      # u'__internal_dst_risk_exposure': 1.0}
 
-    - set_fact:
+    - name: Build l4_params 
+      set_fact:
+        l4_params: "{{ l4_params + item.l4_params  }}"             # Extend the list
+      loop: '{{ api.ansible_facts.adm.raw.default_policies }}'
+
+    - debug:
+        msg: '{{ acl_protocol[item.proto] }}'
+      loop: '{{ l4_params }}'
+
+    - name: Create pseudo_acl
+      set_fact:
         pseudo_acl: "{{ pseudo_acl + [ {'action': action, 'from-ip-addresses': from_ip_addresses, 'to-ip-addresses': to_ip_addresses, 'proto-ports': proto_ports} ] }}"
       vars:
-        action: "{{ acl_action[item.action] | default('deny') }}"
+        action: permit
         from_ip_addresses: ['0.0.0.0/0']
         to_ip_addresses: ['0.0.0.0/0']
-        proto_ports: ["{{ {'ports': item.ports.from|string , 'protocol': item.proto} }}"]
-      loop: '{{ api.ansible_facts.adm.policy }}'
+        # proto_ports: ["{{ {'port': item.port[0] | string , 'protocol': item.proto} }}"]
+        proto_ports: ["{{ {'protocol': acl_protocol[item.proto], 'ports': item.port[0] | string} }}"]
+      loop: '{{ l4_params }}'
+      when: acl_protocol[item.proto] != 'icmp'                    # ICMP cannot specify ports, ignore  TODO
 
     - debug:
         msg: '{{ item }}'
