@@ -23,7 +23,7 @@ authors:
 ### OPTIONAL but strongly recommended
 
 # A short summary description of the collection
-description: Pensando 
+description: Pensando Policy Services Manager (PSM) create, update, query or delete a Network Security Policy 
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
@@ -43,13 +43,13 @@ tags: []
 dependencies: {}
 
 # The URL of the originating SCM repository
-repository: http://example.com/repository
+repository: https://github.com/joelwking/pensando
 
 # The URL to any online docs
 documentation: http://docs.example.com
 
 # The URL to the homepage of the collection/project
-homepage: http://example.com
+homepage: https://pensando.io
 
 # The URL to the collection issue tracker
-issues: http://example.com/issue/tracker
+issues: https://github.com/joelwking/pensando/issue/tracker

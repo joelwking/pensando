@@ -31,8 +31,11 @@
         to-ip-addresses:
           - 192.0.2.0/24
 
+  collections:
+    - joelwking.pensando
+
   module_defaults:
-    joelwking.pensando.network_security_policy:
+    network_security_policy:
       hostname: 10.255.40.39
       username: admin
       password: '{{ password }}'
@@ -42,21 +45,21 @@
 
   tasks:
     - name: Query Policy
-      joelwking.pensando.network_security_policy:
+      network_security_policy:
           state: query
 
     - name: Attempt to Delete Policy which does not exist
-      joelwking.pensando.network_security_policy:
+      network_security_policy:
           state: absent
           policy_name: foo
 
+    - name: Delete Policy which does exist
+      network_security_policy:
+          state: absent
+          policy_name: quarantine
+          
     - name: Add a network_security_policy
-      joelwking.pensando.network_security_policy:
+      network_security_policy:
           state: present
           policy_name: quarantine
           rules: '{{ quarantine }}'
-
-    - name: Delete Policy which does exist
-      joelwking.pensando.network_security_policy:
-          state: absent
-          policy_name: quarantine

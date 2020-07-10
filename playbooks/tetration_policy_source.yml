@@ -1,0 +1,92 @@
+#!/usr/bin/ansible-playbook
+---
+#
+#      Copyright (c) 2020 World Wide Technology, LLC
+#      All rights reserved.
+#
+#      author: Joel W. King, World Wide Technology
+#
+#      Playbook to test and demonstrate the basic functionality of module network_security_policy
+#
+#      usage: ./tetration_policy_source.yml -vv -t tetration
+#
+#  
+- hosts: localhost
+  gather_facts: no
+  connection: local
+
+  vars_files:
+    - /home/administrator/ansible/playbooks/files/passwords.yml
+
+  vars:
+    api_credentials: /home/administrator/ansible/playbooks/files/tetration/api_credentials.json
+
+    quarantine:
+      - action: deny
+        from-ip-addresses: 
+          - 198.51.100.0/24
+        proto-ports:
+          - ports: '123'
+            protocol: udp
+        to-ip-addresses:
+          - 192.0.2.0/24
+
+    acl_action: {"ALLOW": "permit", "DROP": "deny"}
+    pseudo_acl: []
+
+  collections:
+    - joelwking.pensando
+
+  module_defaults:
+    network_security_policy:
+      hostname: '{{ pensando_psm.host }}'
+      username: '{{ pensando_psm.username }}'
+      password: '{{ pensando_psm.password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
+  tasks:
+    - name: Query policy using the API via Tetration Application module
+      tetration_application:
+        application: 'PolicyPubApp'
+        version: v11
+        api_host: '{{ atc_tetration.host }}'
+        api_cfile: '{{ api_credentials }}'
+        api_verify: False
+      register: api
+      tags: [tetration]
+
+    - debug:
+        msg: '{{ item }}'
+        verbosity: 2
+      loop: '{{ api.ansible_facts.adm.policy }}'
+
+      # Each item contains
+      # {u'confidence': 0.95, u'ether_type': u'ip', u'proto': u'tcp', u'consumer_filter_name': u'EPG-DEV-PUBWIN1', 
+      # u'provider_filter_name': u'Default:cluster', u'priority': 100, u'action': u'ALLOW', u'ports': {u'to': 22, u'from': 22}}
+
+    - set_fact:
+        pseudo_acl: "{{ pseudo_acl + [ {'action': action, 'from-ip-addresses': from_ip_addresses, 'to-ip-addresses': to_ip_addresses, 'proto-ports': proto_ports} ] }}"
+      vars:
+        action: "{{ acl_action[item.action] | default('deny') }}"
+        from_ip_addresses: ['0.0.0.0/0']
+        to_ip_addresses: ['0.0.0.0/0']
+        proto_ports: ["{{ {'ports': item.ports.from|string , 'protocol': item.proto} }}"]
+      loop: '{{ api.ansible_facts.adm.policy }}'
+
+    - debug:
+        msg: '{{ item }}'
+        verbosity: 2
+      loop: '{{ pseudo_acl }}'
+
+    - name: Delete Policy  
+      network_security_policy:
+          state: absent
+          policy_name: tetration
+
+    - name: Add a network_security_policy
+      network_security_policy:
+          state: present
+          policy_name: tetration
+          rules: '{{ pseudo_acl }}'

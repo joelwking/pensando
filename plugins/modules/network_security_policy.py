@@ -145,6 +145,40 @@ class Pensando(object):
                 return r
         return r
 
+    def manage_policy(self, params):
+        """
+            Logic to apply or update an existing policy
+            We expect 'rules' to be a list of dictionaries with the correct keywork and values
+
+            TODO this method is only prelimiary code !!!
+        """
+        
+        url = '/configs/security/{}/networksecuritypolicies'
+
+        payload = json.dumps({"kind": "NetworkSecurityPolicy",
+                              "api-version": params.get('api_version'),
+                              "meta": {
+                                "name": params.get('policy_name'),
+                                "tenant": params.get('tenant'),
+                                "namespace": params.get('namespace')
+                                },
+                              "spec": {
+                                "attach-tenant": params.get('attach_tenant'),
+                                "rules": params.get('rules')
+                                }
+                             }
+                            )
+
+        policy = self.rate_limit('POST', url, data=payload)
+
+        if policy.status_code == requests.codes.conflict:                   # already exists!
+            self.changed = False
+            ### Query the existing policy?
+        
+        else:
+            self.changed = True
+
+        return policy
 
 def main():
     """
@@ -194,7 +228,18 @@ def main():
         elif policy.ok:
             module.exit_json(changed=True, policy=policy.json())
 
-    module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
+    elif module.params.get('state') == 'present':
+        policy = psm.manage_policy(module.params)
+        if policy.ok:
+            module.exit_json(changed=psm.changed, policy=policy.json())
+        else:
+            module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
+
+    else:
+        module.fail_json(msg='unknown state specified')
+
+    module.fail_json(msg='Unexpected failure:{}:{}'.format(policy.status_code, policy.text))
+    
 
 if __name__ == '__main__':
     main()
