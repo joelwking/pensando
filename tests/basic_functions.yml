@@ -1,0 +1,62 @@
+#!/usr/bin/ansible-playbook
+---
+#
+#      Copyright (c) 2020 World Wide Technology, LLC
+#      All rights reserved.
+#
+#      author: Joel W. King, World Wide Technology
+#
+#      Playbook to test and demonstrate the basic functionality of module network_security_policy
+#
+#      usage: ./basic_functions.yml -e "password=foo"
+#
+#  
+- hosts: localhost
+  gather_facts: no
+  connection: local
+
+  vars_files:
+    # None
+
+  vars:
+    password: "Pensando0$"                    # I only show it because it is the documented default
+
+    quarantine:
+      - action: deny
+        from-ip-addresses: 
+          - 198.51.100.0/24
+        proto-ports:
+          - ports: '123'
+            protocol: udp
+        to-ip-addresses:
+          - 192.0.2.0/24
+
+  module_defaults:
+    joelwking.pensando.network_security_policy:
+      hostname: 10.255.40.39
+      username: admin
+      password: '{{ password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
+  tasks:
+    - name: Query Policy
+      joelwking.pensando.network_security_policy:
+          state: query
+
+    - name: Attempt to Delete Policy which does not exist
+      joelwking.pensando.network_security_policy:
+          state: absent
+          policy_name: foo
+
+    - name: Add a network_security_policy
+      joelwking.pensando.network_security_policy:
+          state: present
+          policy_name: quarantine
+          rules: '{{ quarantine }}'
+
+    - name: Delete Policy which does exist
+      joelwking.pensando.network_security_policy:
+          state: absent
+          policy_name: quarantine

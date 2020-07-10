@@ -7,12 +7,15 @@ DOCUMENTATION = '''
 ---
 module: network_security_policy
 
-short_description: Create or update network security policy
+short_description: Create, update, query or delete a Network Security Policy 
 
 version_added: "2.9"
 
 description:
-    - "Insert or query a document in a MongoDB database."
+    - A Network Security Policy contains firewall rules such as 'to' and 'from', 'ports', 'protocols, etc.
+    - and is applied to the Pensando policy and services manager (PSM). These policies are proprogated to
+    - the Distributed Service Card (DSC) by the PSM. This module programatically manages the policy using the 
+    - API of the PSM. 
 
 options:
     tenant:
@@ -23,7 +26,7 @@ options:
 
     namespace:
         description:
-            - Namespace name
+            - Name of the Namespace
         required: false
         default: 'default'
 
@@ -31,6 +34,7 @@ options:
         description:
             - Name of the network security policy (only one network security policy is currently allowed)
         required: false
+        default: 'default'
 
     attach_tenant:
         description:
@@ -40,7 +44,7 @@ options:
 
     rules:
         description:
-            - A list of dictionary object which define the rules to be applied
+            - A list of dictionary objects which define the firewall rules to be applied to the PSM
         required: false
 
     state:
@@ -57,7 +61,7 @@ options:
 
     password:
         description:
-            - Password used to authenticate with the database
+            - Password used to authenticate with the PSM
         required: true
 
     hostname:
@@ -92,7 +96,6 @@ class Pensando(object):
     def __init__(self, api_version=None, password=None, username=None, hostname=None, rate_limit_retry=4):
         """
         """
-        self.RATE_LIMIT_EXCEEDED = 429             # Rate Limit Error code 
         self.rate_limit_retry = rate_limit_retry   # Number of attempts to issue the command before assuming the 429 is persistent
 
         self.api_version = api_version
@@ -136,8 +139,8 @@ class Pensando(object):
 
         for _ in range(self.rate_limit_retry):
             r = requests.request(verb, url, verify=self.verify, cookies=self.cookie, **kwargs)
-            if r.status_code == self.RATE_LIMIT_EXCEEDED:
-                time.sleep(int(r.headers.get("Retry-After", 1)))
+            if r.status_code == requests.codes.TOO_MANY_REQUESTS:
+                time.sleep(int(r.headers.get("Retry-After", 1)))    # TODO, verify, this is from Meraki
             else:
                 return r
         return r
@@ -145,6 +148,7 @@ class Pensando(object):
 
 def main():
     """
+        Main logic
     """
     module = AnsibleModule(
     argument_spec=dict(
@@ -156,7 +160,7 @@ def main():
         tenant=dict(required=False, default='default'),
         rules=dict(required=False, type='list'),
         attach_tenant=dict(required=False, default=True, type='bool'),
-        policy_name=dict(required=False),
+        policy_name=dict(required=False, default='default'),
         namespace=dict(required=False, default='default')
         ),
     check_invalid_arguments=True,
@@ -181,6 +185,16 @@ def main():
             module.exit_json(changed=False, policy=policy.json())
         else:
             module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
+
+    elif module.params.get('state') == 'absent':
+        url = '/configs/security/{}/networksecuritypolicies/{}'.format('{}', module.params.get('policy_name'))
+        policy = psm.rate_limit('DELETE', url)
+        if policy.status_code == requests.codes.NOT_FOUND:
+            module.exit_json(changed=False, policy=policy.json())
+        elif policy.ok:
+            module.exit_json(changed=True, policy=policy.json())
+
+    module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
 
 if __name__ == '__main__':
     main()
