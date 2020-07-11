@@ -1,21 +1,21 @@
 #!/usr/bin/python
 #
-#     Copyright (c) 2020 World Wide Technology, LLC 
-#     All rights reserved. 
+#     Copyright (c) 2020 World Wide Technology, LLC
+#     All rights reserved.
 
 DOCUMENTATION = '''
 ---
 module: network_security_policy
 
-short_description: Create, update, query or delete a Network Security Policy 
+short_description: Create, update, query or delete a Network Security Policy
 
 version_added: "2.9"
 
 description:
     - A Network Security Policy contains firewall rules such as 'to' and 'from', 'ports', 'protocols, etc.
-    - and is applied to the Pensando policy and services manager (PSM). These policies are proprogated to
-    - the Distributed Service Card (DSC) by the PSM. This module programatically manages the policy using the 
-    - API of the PSM. 
+    - and is applied to the Pensando policy and services manager (PSM). These policies are propagated to
+    - the Distributed Service Card (DSC) by the PSM. This module programatically manages the policy using the
+    - API of the PSM.
 
 options:
     tenant:
@@ -48,7 +48,7 @@ options:
         required: false
 
     state:
-        description: 
+        description:
             - Use 'present' or 'absent' to add or remove
             - Use 'query' for listing the current policy
         required: false
@@ -80,6 +80,28 @@ author:
     - Joel W. King (@joelwking)
 '''
 
+EXAMPLES = '''
+
+- network_security_policy:
+      hostname: psm.example.net
+      username: admin
+      password: '{{ password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+      state: present
+      policy_name: quarantine
+      rules:
+        - action: deny
+          from-ip-addresses: 
+            - 198.51.100.0/24
+          proto-ports:
+            - ports: '123'
+              protocol: udp
+          to-ip-addresses:
+            - 192.0.2.0/24
+
+'''
 import time
 import json
 import requests
@@ -88,9 +110,10 @@ requests.packages.urllib3.disable_warnings()
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 class Pensando(object):
     """
-        class to manage the connection with the Pensando Policy and Service Manager (PSM)
+        Class to manage the connection with the Pensando Policy and Service Manager (PSM)
         In documentation, you may see this referred to by the codename 'Venice'
     """
     def __init__(self, api_version=None, password=None, username=None, hostname=None, rate_limit_retry=4):
@@ -105,7 +128,7 @@ class Pensando(object):
         #
         self.changed = False
         self.cookie = None
-        self.headers = {'content-type':'application/json'}
+        self.headers = {'content-type': 'application/json'}
         self.verify = False
 
     def login(self, tenant='default'):
@@ -127,7 +150,6 @@ class Pensando(object):
             self.cookie = dict(sid=r.cookies.get('sid'))
 
         return r
-
 
     def rate_limit(self, verb, url, **kwargs):
         """
@@ -152,55 +174,53 @@ class Pensando(object):
 
             TODO this method is only prelimiary code !!!
         """
-        
+
         url = '/configs/security/{}/networksecuritypolicies'
 
         payload = json.dumps({"kind": "NetworkSecurityPolicy",
                               "api-version": params.get('api_version'),
-                              "meta": {
-                                "name": params.get('policy_name'),
-                                "tenant": params.get('tenant'),
-                                "namespace": params.get('namespace')
-                                },
-                              "spec": {
-                                "attach-tenant": params.get('attach_tenant'),
-                                "rules": params.get('rules')
-                                }
-                             }
+                              "meta": {"name": params.get('policy_name'),
+                                       "tenant": params.get('tenant'),
+                                       "namespace": params.get('namespace')
+                                      },
+                              "spec": {"attach-tenant": params.get('attach_tenant'),
+                                       "rules": params.get('rules')
+                                      }
+                              }
                             )
 
         policy = self.rate_limit('POST', url, data=payload)
 
         if policy.status_code == requests.codes.conflict:                   # already exists!
             self.changed = False
-            ### Query the existing policy?
-        
+            # TODO Query the existing policy?
         else:
             self.changed = True
 
         return policy
+
 
 def main():
     """
         Main logic
     """
     module = AnsibleModule(
-    argument_spec=dict(
-        hostname=dict(required=True),
-        api_version=dict(required=False, default='v1'),
-        username=dict(required=True,),
-        password=dict(required=True, no_log=True),
-        state=dict(required=False, default='present'),
-        tenant=dict(required=False, default='default'),
-        rules=dict(required=False, type='list'),
-        attach_tenant=dict(required=False, default=True, type='bool'),
-        policy_name=dict(required=False, default='default'),
-        namespace=dict(required=False, default='default')
-        ),
-    check_invalid_arguments=True,
-    add_file_common_args=True,
-    supports_check_mode=False
-    )
+        argument_spec=dict(
+            hostname=dict(required=True),
+            api_version=dict(required=False, default='v1'),
+            username=dict(required=True,),
+            password=dict(required=True, no_log=True),
+            state=dict(required=False, default='present'),
+            tenant=dict(required=False, default='default'),
+            rules=dict(required=False, type='list'),
+            attach_tenant=dict(required=False, default=True, type='bool'),
+            policy_name=dict(required=False, default='default'),
+            namespace=dict(required=False, default='default')
+            ),
+            check_invalid_arguments=True,
+            add_file_common_args=True,
+            supports_check_mode=False
+        )
 
     psm = Pensando(hostname=module.params.get('hostname'),
                    username=module.params.get('username'),
@@ -236,10 +256,10 @@ def main():
             module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
 
     else:
-        module.fail_json(msg='unknown state specified')
+        module.fail_json(msg='Unknown state specified, must be "query", "absent", or "present"')
 
     module.fail_json(msg='Unexpected failure:{}:{}'.format(policy.status_code, policy.text))
-    
+
 
 if __name__ == '__main__':
     main()

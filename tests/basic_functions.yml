@@ -21,6 +21,9 @@
   vars:
     password: "Pensando0$"                    # I only show it because it is the documented default
 
+    #
+    #  Yaml format of a policy
+    #
     quarantine:
       - action: deny
         from-ip-addresses: 

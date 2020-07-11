@@ -1,0 +1,8 @@
+#
+# .gitignore file 
+#
+plugins/modules/*.pyc
+#
+# Ignore the collection binary
+#
+*pensando*.tar.gz
