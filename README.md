@@ -60,9 +60,9 @@ OPTIONS (= is mandatory):
 - state
         Use 'present' or 'absent' to add or remove
         Use 'query' for listing the current policy
-        [Default: (null)]
+        [Default: present]
 
-= tenant
+- tenant
         Name of the tenant
         [Default: default]
 

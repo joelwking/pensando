@@ -21,7 +21,7 @@ options:
     tenant:
         description:
             - Name of the tenant
-        required: true
+        required: false
         default: 'default'
 
     namespace:
@@ -52,6 +52,7 @@ options:
             - Use 'present' or 'absent' to add or remove
             - Use 'query' for listing the current policy
         required: false
+        default: 'present'
 
     username:
         description:
