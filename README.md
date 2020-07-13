@@ -1,6 +1,6 @@
 # Ansible Collection - joelwking.pensando
 
-The Pensandos PSM platform is a policy and services manager that is based on a programmable, secure microservice-based infrastructure, providing policy management and infrastructure functions.
+The Pensando PSM (Policy Services Manager) platform is a policy and services manager based on a programmable, secure microservice-based infrastructure, providing policy management and infrastructure functions.
 
 The objective of this project is to demonstrate using Ansible to programmatically manage (query, delete, create, update) then Network Security Policy configuration on the Policy Services Manager controller.
 
@@ -13,15 +13,15 @@ The security policy can be generated from a variety of sources, however the init
 ## Module 
 `plugins/modules/network_security_policy.py` is used to interface with the PSM API to manage policy.
 
-```bash
+```shell
 $ ansible-doc joelwking.pensando.network_security_policy
-> NETWORK_SECURITY_POLICY    (/collections/ansible_collections/joelwking/pensando/plugins/modules/network_security_policy)
+> NETWORK_SECURITY_POLICY    (/collections/ansible_collections/joelwking/pensando/plugins/modules/network_securit
 
         A Network Security Policy contains firewall rules such as 'to' and 'from',
         'ports', 'protocols, etc. and is applied to the Pensando policy and services
-        manager (PSM). These policies are propagated to the Distributed Service Card
-        (DSC) by the PSM. This module programatically manages the policy using the API of
-        the PSM.
+        manager (PSM). These policies are propagated to the Distributed Service Card (DSC)
+        by the PSM. This module programatically manages the policy using the API of the
+        PSM.
 
   * This module is maintained by The Ansible Community
 OPTIONS (= is mandatory):
@@ -99,8 +99,22 @@ EXAMPLES:
           to-ip-addresses:
             - 192.0.2.0/24
 
+- name: Query Policy
+  network_security_policy:
+      hostname: psm.example.net
+      username: admin
+      password: '{{ password }}'
+      state: query
+
+- name: Delete Policy
+  network_security_policy:
+      hostname: psm.example.net
+      username: admin
+      password: '{{ password }}'
+      state: absent
+      policy_name: foo
 
 ```
 
 ## Author
-    Joel W. King  @joelwking
+Joel W. King  @joelwking

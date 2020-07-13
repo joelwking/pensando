@@ -101,6 +101,22 @@ EXAMPLES = '''
           to-ip-addresses:
             - 192.0.2.0/24
 
+- name: Query Policy
+  network_security_policy:
+      hostname: psm.example.net
+      username: admin
+      password: '{{ password }}'
+      state: query
+
+- name: Delete Policy
+  network_security_policy:
+      hostname: psm.example.net
+      username: admin
+      password: '{{ password }}'
+      state: absent
+      policy_name: foo
+
+
 '''
 import time
 import json
