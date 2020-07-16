@@ -102,3 +102,5 @@
               ports: "8000,8001,8002"
             - protocol: udp
               ports: "1001-1010"
+            - protocol: tcp
+              ports: "1492-1492"

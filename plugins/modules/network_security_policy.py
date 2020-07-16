@@ -2,7 +2,12 @@
 #
 #     Copyright (c) 2020 World Wide Technology, LLC
 #     All rights reserved.
-
+#
+#     linter: flake8
+#         [flake8]
+#         max-line-length = 160
+#         ignore = E402
+#
 DOCUMENTATION = '''
 ---
 module: network_security_policy

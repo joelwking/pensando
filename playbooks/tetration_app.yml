@@ -23,11 +23,10 @@
     app_name: 'PolicyPubApp'
     app_version: latest
     api_credentials: /home/administrator/ansible/playbooks/files/tetration/api_credentials.json
-
     #
-    #   Variables for manipulating data format from Tetraion
-    #
-    acl_protocol: {1: "icmp", 6: "tcp", 17 : "udp"}
+    #  No variables changes below this line
+    #  ------------------------------------
+    proto_ports: []
 
   collections:
     - joelwking.pensando
@@ -52,6 +51,21 @@
       register: api
       tags: [tetration]
 
+    - debug:
+        msg: "{{ item['proto-ports'] }}"
+      loop: '{{ api.ansible_facts.adm.policy }}'
+
+    - name: Create list of protocols and ports
+      set_fact:
+        # proto_ports: "{{ proto_ports + [ {'protocol': item['proto-ports'].protocol, 'ports': item['proto-ports'].ports } ] }}"
+        proto_ports: "{{ proto_ports + [ item['proto-ports'] ] }}"
+      loop: '{{ api.ansible_facts.adm.policy }}'
+      when:
+        # - item["confidence"] >= 0.90
+        # - item["provider_filter_name"] == "EPG-DEV-PUBWIN1"
+        # - item["consumer_filter_name"] == "EPG-DEV-PUBWIN1:EPG-DEV"
+        # - item["confidence"] >= 0.90
+
     - name: Delete app  
       app:
         state: absent
@@ -61,7 +75,7 @@
       app:
           state: present
           app_name: '{{ app_name }}_{{ app_version }}'
-          proto_ports: '{{ pseudo_acl }}'
+          proto_ports: '{{ proto_ports }}'
 
     #
     #  All Finished!
