@@ -10,7 +10,7 @@
 #
 #      usage: ./tetration_app.yml -v --tags tetration
 #                                    --skip-tags debug
-#
+#             ./tetration_app.yml -v -e 'app_name="Wordpress-cl3" app_version=latest'
 #  
 - hosts: localhost
   gather_facts: no
@@ -57,14 +57,11 @@
 
     - name: Create list of protocols and ports
       set_fact:
-        # proto_ports: "{{ proto_ports + [ {'protocol': item['proto-ports'].protocol, 'ports': item['proto-ports'].ports } ] }}"
         proto_ports: "{{ proto_ports + [ item['proto-ports'] ] }}"
       loop: '{{ api.ansible_facts.adm.policy }}'
       when:
-        # - item["confidence"] >= 0.90
-        # - item["provider_filter_name"] == "EPG-DEV-PUBWIN1"
+        - item["confidence"] >= 0.90
         # - item["consumer_filter_name"] == "EPG-DEV-PUBWIN1:EPG-DEV"
-        # - item["confidence"] >= 0.90
 
     - name: Delete app  
       app:
