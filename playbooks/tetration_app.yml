@@ -1,0 +1,68 @@
+#!/usr/bin/ansible-playbook
+---
+#
+#      Copyright (c) 2020 World Wide Technology, LLC
+#      All rights reserved.
+#
+#      author: Joel W. King, World Wide Technology
+#
+#      Retrieve policy from Tetration and publish it to the PSM as an App
+#
+#      usage: ./tetration_app.yml -v --tags tetration
+#                                    --skip-tags debug
+#
+#  
+- hosts: localhost
+  gather_facts: no
+  connection: local
+
+  vars_files:
+    - /home/administrator/ansible/playbooks/files/passwords.yml   #  Credentials for PSM defined in vaulted file
+
+  vars:
+    app_name: 'PolicyPubApp'
+    app_version: latest
+    api_credentials: /home/administrator/ansible/playbooks/files/tetration/api_credentials.json
+
+    #
+    #   Variables for manipulating data format from Tetraion
+    #
+    acl_protocol: {1: "icmp", 6: "tcp", 17 : "udp"}
+
+  collections:
+    - joelwking.pensando
+
+  module_defaults:
+    app:
+      hostname: '{{ pensando_psm.host }}'
+      username: '{{ pensando_psm.username }}'
+      password: '{{ pensando_psm.password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
+  tasks:
+    - name: Query policy using the API via Tetration Application module
+      tetration_application:
+        application: '{{ app_name }}'
+        version: '{{ app_version }}'
+        api_host: '{{ atc_tetration.host }}'
+        api_cfile: '{{ api_credentials }}'
+        api_verify: False
+      register: api
+      tags: [tetration]
+
+    - name: Delete app  
+      app:
+        state: absent
+        app_name: '{{ app_name }}_{{ app_version }}'
+
+    - name: Add app
+      app:
+          state: present
+          app_name: '{{ app_name }}_{{ app_version }}'
+          proto_ports: '{{ pseudo_acl }}'
+
+    #
+    #  All Finished!
+    #

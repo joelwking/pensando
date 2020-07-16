@@ -9,6 +9,8 @@
 #      Playbook to test and demonstrate the basic functionality of module network_security_policy
 #
 #      usage: ./basic_functions.yml -e "password=foo"
+#                                    --start-at-task "Query app" -v
+#
 #
 #  
 - hosts: localhost
@@ -46,23 +48,57 @@
       tenant: default
       namespace: default
 
+    app:
+      hostname: 10.255.40.39
+      username: admin
+      password: '{{ password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
   tasks:
     - name: Query Policy
       network_security_policy:
-          state: query
+        state: query
 
     - name: Attempt to Delete Policy which does not exist
       network_security_policy:
-          state: absent
-          policy_name: foo
+        state: absent
+        policy_name: foo
 
     - name: Delete Policy which does exist
       network_security_policy:
-          state: absent
-          policy_name: quarantine
+        state: absent
+        policy_name: quarantine
           
     - name: Add a network_security_policy
       network_security_policy:
-          state: present
-          policy_name: quarantine
-          rules: '{{ quarantine }}'
+        state: present
+        policy_name: quarantine
+        rules: '{{ quarantine }}'
+
+    #
+    #    --start-at-task "Query app" -v    to skip over network_security_policy
+    #
+    - name: Query app
+      app:
+        state: query
+
+    - name: Delete app
+      app:
+        state: absent
+        app_name: SAMPLE
+
+    - name: Create app
+      app:
+        state: present
+        app_name: SAMPLE
+        proto_ports:
+            - protocol: tcp
+              ports: "21"
+            - protocol: tcp
+              ports: "137-138"
+            - protocol: udp
+              ports: "8000,8001,8002"
+            - protocol: udp
+              ports: "1001-1010"
