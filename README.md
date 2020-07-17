@@ -19,7 +19,7 @@ These modules use the PSM API to query, delete and create/update the associated 
 * `plugins/module_utils/Pensando.py` is a Python class called by modules to handle common functions.
 
 
-Module documentation is accessable by using `ansible-doc`,
+Module documentation is accessible by using `ansible-doc`,
 
 ```shell
 $ ansible-doc joelwking.pensando.network_security_policy
@@ -27,8 +27,34 @@ $ ansible-doc joelwking.pensando.network_security_policy
 or viewing the Python source code.
 
 ## Issues
+Open issues and code enhancements are described in this section. Be aware this is **alpha** code, meaning not all functionality has been tested and implemented. 
 
-**TODO**
+* *Duplicate ports*: Data returned from the Tetration API includes both `absolute_policies` and `default_policies`. Default policies are the artifact of an Application Dependency Mapping (ADM) run. Absolute policies are manually (or via the API) configured. Ports and protocols are reported based on the traffic observations from one or more hosts defined. The API will return duplicate ports and protocols when simply extracting output from the API when the consumer and provider filter IDs are ignored. The PSM API does not optimize (summarize) the ports and protocols. There are duplicate entries applied. Needed is a module/lookup/plugin to create unique entries.
 
+* *ICMP*: ICMP packets have no concept of a port number. If you specify a port, it must be null, or, don't include 'port' field in the payload for ICMP. 
+```
+400:{"kind":"Status","result":{"Str":"Request validation failed"},"message":["Can not specify ports for ICMP protocol","port unspecified must be an integer value"],"code":400,"object-ref":{"tenant":"default","namespace":"default","kind":"App","name":"SAMPLE"}}
+```
+```yaml
+        proto_ports:
+            - protocol: icmp                 # This is valid
+            - protocol: icmp                 # This is valid
+              ports: ""
+            - protocol: icmp                 # This will fail.
+              ports: "unspecified"
+```        
+* *App names*: App names cannot include colons, e.g. `'app_name="TetlabBase:WordPress" app_version=latest'` is not valid. In Tetration, the app name can include a colon. 
+
+* *Port Ranges*: Tetration allows the user to create `absolute_policies` with a starting port higher than the ending port. The PSM API will not permit this mis-configuration.
+
+```
+400:{"kind":"Status","result":{"Str":"Request validation failed"},"message":["Invalid port range 21-20. first number bigger than second"],"code":400,"object-ref":{"tenant":"default","namespace":"default","kind":"App","name":"SAMPLE"}}
+
+```
+```yaml
+        proto_ports:
+            - protocol: tcp
+              ports: "21-20"                #  first number cannot be higher than second
+```
 ## Author
 Joel W. King  @joelwking

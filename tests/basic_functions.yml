@@ -94,6 +94,11 @@
         state: present
         app_name: SAMPLE
         proto_ports:
+            - protocol: icmp                 # This is valid
+            - protocol: icmp                 # This is valid
+              ports: ""
+        #    - protocol: icmp                # This will fail.
+        #      ports: "unspecified"
             - protocol: tcp
               ports: "21"
             - protocol: tcp
@@ -104,3 +109,5 @@
               ports: "1001-1010"
             - protocol: tcp
               ports: "1492-1492"
+        #    - protocol: tcp
+        #      ports: "21-20"                #  first number cannot be higher than second
