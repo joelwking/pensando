@@ -56,5 +56,8 @@ Open issues and code enhancements are described in this section. Be aware this i
             - protocol: tcp
               ports: "21-20"                #  first number cannot be higher than second
 ```
+
+* *PERMIT|DENY*: Must filter on action in rules.
+
 ## Author
 Joel W. King  @joelwking
