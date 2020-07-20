@@ -1,7 +1,7 @@
 README
 ------
 
-Instructures for building and running a demonstration environment.
+Instructions for building and running a demonstration environment.
 
 ## Build
 Build a Docker image using the currently published code. You can either clone the repo or issue a `wget` command to save a copy of the Docker file relative to your current directory in `pensando/Dockerfile`.
@@ -67,7 +67,7 @@ Execute the playbook.
 ```bash
 ansible-playbook ./tetration_app.yml  --skip-tags tetration --ask-vault-pass
 ```
-The following is an appreviated output from a successful execution.
+The following is an abbreviated output from a successful execution.
 
 ```bash
 [WARNING]: running playbook inside collection joelwking.pensando
