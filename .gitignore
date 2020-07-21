@@ -6,3 +6,11 @@ plugins/modules/*.pyc
 # Ignore the collection binary
 #
 *pensando*.tar.gz
+#
+# Ignore all the generated policy from Tetration
+#
+playbooks/files/*.json
+#
+# Except those we want to publish
+#
+!playbooks/files/PolicyPubApp.json
