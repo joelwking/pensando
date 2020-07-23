@@ -63,9 +63,9 @@ Run the demonstration playbook. A sample policy file from the WWT Advanced Techn
 
 Logon your PSM instance and navigate to the `Security -> Apps`.
 
-Execute the playbook.
+Execute the playbook. The `app_name` variable can be used to specify the inputfile. You may specify and value for `app_version` when skipping the Tetration query and loading JSON from disk. The JSON input file also contains meta-data including the VRF information, the version and latest version.
 ```bash
-ansible-playbook ./tetration_app.yml  --skip-tags tetration --ask-vault-pass
+ansible-playbook ./tetration_app.yml  --skip-tags tetration --ask-vault-pass -e 'app_name="PolicyPubApp"'
 ```
 The following is an abbreviated output from a successful execution.
 

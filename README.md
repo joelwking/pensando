@@ -31,7 +31,7 @@ Open issues and code enhancements are described in this section. Be aware this i
 
 * *Duplicate ports*: Data returned from the Tetration API includes both `absolute_policies` and `default_policies`. Default policies are the artifact of an Application Dependency Mapping (ADM) run. Absolute policies are manually (or via the API) configured. Ports and protocols are reported based on the traffic observations from one or more hosts defined. The API will return duplicate ports and protocols when simply extracting output from the API when the consumer and provider filter IDs are ignored. The PSM API does not optimize (summarize) the ports and protocols. There are duplicate entries applied. Needed is a module/lookup/plugin to create unique entries.
 
-* *ICMP*: ICMP packets have no concept of a port number. If you specify a port, it must be null, or, don't include 'port' field in the payload for ICMP. 
+* *ICMP*: ICMP packets have no concept of a port number. If you specify a port, it must be null, or, don't include 'port' field in the payload for ICMP. *!! Fixed by https://github.com/joelwking/ansible-tetration/pull/3 !!*
 ```
 400:{"kind":"Status","result":{"Str":"Request validation failed"},"message":["Can not specify ports for ICMP protocol","port unspecified must be an integer value"],"code":400,"object-ref":{"tenant":"default","namespace":"default","kind":"App","name":"SAMPLE"}}
 ```
@@ -45,7 +45,7 @@ Open issues and code enhancements are described in this section. Be aware this i
 ```        
 * *App names*: App names cannot include colons, e.g. `'app_name="TetlabBase:WordPress" app_version=latest'` is not valid. In Tetration, the app name can include a colon. 
 
-* *Port Ranges*: Tetration allows the user to create `absolute_policies` with a starting port higher than the ending port. The PSM API will not permit this mis-configuration.
+* *Port Ranges*: Tetration allows the user to create `absolute_policies` with a starting port higher than the ending port. The PSM API will not permit this mis-configuration. *!! Fixed by https://github.com/joelwking/ansible-tetration/pull/3 !!*
 
 ```
 400:{"kind":"Status","result":{"Str":"Request validation failed"},"message":["Invalid port range 21-20. first number bigger than second"],"code":400,"object-ref":{"tenant":"default","namespace":"default","kind":"App","name":"SAMPLE"}}
@@ -57,7 +57,9 @@ Open issues and code enhancements are described in this section. Be aware this i
               ports: "21-20"                #  first number cannot be higher than second
 ```
 
-* *PERMIT|DENY*: Must filter on action in rules.
+* *PERMIT|DENY*: Must filter on action in rules. *!! resolved by adding `- item["action"] == "ALLOW"` to playbooks !!*
+
+* *Pretty Print Output JSON files*: *!! resolved by adding `to_nice_json(indent=2)` to copy module. !!*
 
 ## Author
 Joel W. King  @joelwking
