@@ -14,3 +14,4 @@ playbooks/files/*.json
 # Except those we want to publish
 #
 !playbooks/files/PolicyPubApp.json
+!playbooks/files/Wordpress-cl3.json
