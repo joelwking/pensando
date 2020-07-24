@@ -122,14 +122,13 @@ class Pensando(object):
 
         # Verify the user specified 'alg' or 'proto_ports', (both is also acceptable)
         if len(payload['spec'] ) == 0:
-            # TODO Fail!
-            return None
-
+            # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
+            pass
 
         payload = json.dumps(payload)
         app = self.rate_limit('POST', url, data=payload)
 
-        if app.status_code == requests.codes.bad_request:                # payloade is incorrect
+        if app.status_code == requests.codes.bad_request:                # payload is incorrect
             self.changed = False
         if app.status_code == requests.codes.conflict:                   # already exists!
             self.changed = False
