@@ -9,6 +9,7 @@ import requests
 import requests.packages.urllib3
 requests.packages.urllib3.disable_warnings()
 
+
 class Pensando(object):
     """
         Class to manage the connection with the Pensando Policy and Service Manager (PSM)
@@ -118,12 +119,11 @@ class Pensando(object):
         if params.get('alg'):
             payload['spec']['alg'] = params.get('alg')
         if params.get('proto_ports'):
-            payload['spec']['proto-ports'] = params.get('proto_ports')
+            payload['spec']['proto-ports'] = self.remove_dups(params.get('proto_ports'))
 
         # Verify the user specified 'alg' or 'proto_ports', (both is also acceptable)
-        if len(payload['spec'] ) == 0:
-            # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
-            pass
+        if len(payload['spec']) == 0:
+            pass                      # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
 
         payload = json.dumps(payload)
         app = self.rate_limit('POST', url, data=payload)
@@ -137,3 +137,20 @@ class Pensando(object):
             self.changed = True
 
         return app
+
+    def remove_dups(self, policy):
+        """
+            Policy from Tetration may have duplicate entries, eliminate the duplicate ports and protocols
+            Input: a list of dictionaries
+            Returns: unique list
+        """
+        unique = set()
+        result = []
+
+        for row in policy:
+            unique.add(tuple(row.items()))
+
+        for row in unique:
+            result.append(dict(row))
+
+        return result

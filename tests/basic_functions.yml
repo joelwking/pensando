@@ -76,6 +76,7 @@
         state: present
         policy_name: quarantine
         rules: '{{ quarantine }}'
+      ignore_errors: True                    # If the policy exists, this will fail
 
     #
     #    --start-at-task "Query app" -v    to skip over network_security_policy
@@ -109,5 +110,15 @@
               ports: "1001-1010"
             - protocol: tcp
               ports: "1492-1492"
+            - protocol: tcp                  # Remove duplicates
+              ports: "22"
+            - protocol: tcp 
+              ports: "22"
         #    - protocol: tcp
         #      ports: "21-20"                #  first number cannot be higher than second
+    - name: Delete app
+      app:
+        state: present
+        app_name: NOPOLICY
+        proto_ports: []                      # Empty list
+      ignore_errors: True                    # Should fail

@@ -17,7 +17,7 @@ short_description: Create, update, query or delete an App
 version_added: "2.9"
 
 description:
-    - An App is a network service defined either by a "protocol, port" pair, or by an application level 
+    - An App is a network service defined either by a "protocol, port" pair, or by an application level
     - gateway (i.e. "ALG"). This module programatically manages the policy using the API of the PSM.
 
 options:
