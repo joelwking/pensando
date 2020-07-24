@@ -84,8 +84,40 @@ author:
 
 EXAMPLES = '''
 
+  
+  module_defaults:
+    app:
+      hostname: 10.255.40.39
+      username: admin
+      password: '{{ password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
 
+  tasks:
+    - name: Query app
+      app:
+        state: query
 
+    - name: Delete app
+      app:
+        state: absent
+        app_name: SAMPLE
+
+    - name: Create app
+      app:
+        state: present
+        app_name: SAMPLE
+        proto_ports:
+            - protocol: icmp                 # This is valid
+            - protocol: icmp                 # This is valid
+              ports: ""
+            - protocol: tcp
+              ports: "21"
+            - protocol: tcp
+              ports: "137-138"
+            - protocol: udp
+              ports: "8000,8001,8002"
 
 '''
 #
