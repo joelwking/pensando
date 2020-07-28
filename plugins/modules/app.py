@@ -146,9 +146,9 @@ def main():
             password=dict(required=True, no_log=True),
             state=dict(required=False, default='present'),
             tenant=dict(required=False, default='default'),
-            alg=dict(required=False, type='list', default=[]),
+            alg=dict(required=False, type='dict', default={}),
             proto_ports=dict(required=False, type='list', default=[]),
-            app_name=dict(required=False, default='default'),
+            app_name=dict(required=False, default=''),
             namespace=dict(required=False, default='default')
             ),
             add_file_common_args=True,
@@ -166,10 +166,12 @@ def main():
         module.fail_json(msg='{}:{}'.format(login.status_code, login.text))
 
     if module.params.get('state') == 'query':
-        url = '/configs/security/{}/apps'
+        url = '/configs/security/{}/apps{}'.format('{}', module.params.get('app_name'))
         policy = psm.rate_limit('GET', url)
         if policy.ok:
-            module.exit_json(changed=False, policy=policy.json())
+            module.exit_json(changed=False, app=policy.json())
+        elif policy.status_code == requests.codes.NOT_FOUND:
+            module.exit_json(changed=False, app=dict(items=[]))
         else:
             module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
 
@@ -177,14 +179,14 @@ def main():
         url = '/configs/security/{}/apps/{}'.format('{}', module.params.get('app_name'))
         policy = psm.rate_limit('DELETE', url)
         if policy.status_code == requests.codes.NOT_FOUND:
-            module.exit_json(changed=False, policy=policy.json())
+            module.exit_json(changed=False, app=policy.json())
         elif policy.ok:
-            module.exit_json(changed=True, policy=policy.json())
+            module.exit_json(changed=True, app=policy.json())
 
     elif module.params.get('state') == 'present':
         policy = psm.manage_app(module.params)
         if policy.ok:
-            module.exit_json(changed=psm.changed, policy=policy.json())
+            module.exit_json(changed=psm.changed, app=policy.json())
         else:
             module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
 

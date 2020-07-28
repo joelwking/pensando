@@ -34,8 +34,8 @@ class Pensando(object):
         """
             To access and execute API calls against a Venice cluster, the client must first authenticate itself.
             This done via the login API endpoint. Once the client has made a successful login, it will
-            receive a cookie (Session ID) in the header “Set-Cookie” of the response from the login call.
-            The header contains the cookie name, “sid”, value, expiry time, and other info.
+            receive a cookie (Session ID) in the header 'Set-Cookie' of the response from the login call.
+            The header contains the cookie name, 'sid', value, expiry time, and other info.
 
             The cookie is used to authenticate each API call made to Venice. The client will need to provide
             the cookie in the header in all subsequent requests to Venice.
@@ -71,7 +71,7 @@ class Pensando(object):
             Logic to apply or update an existing policy
             We expect 'rules' to be a list of dictionaries with the correct keywork and values
 
-            TODO this method is only prelimiary code !!!
+            TODO this method is only preliminary code !!!
         """
 
         url = '/configs/security/{}/networksecuritypolicies'
@@ -102,7 +102,7 @@ class Pensando(object):
         """
             Logic to apply or update an App
 
-            TODO this method is only prelimiary code !!!
+            TODO this method is only preliminary code !!!
         """
 
         url = '/configs/security/{}/apps'
@@ -125,6 +125,11 @@ class Pensando(object):
         if len(payload['spec']) == 0:
             pass                      # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
 
+        if self.existing_app(params.get('app_name')):
+            verb = 'PUT'
+        else:
+            verb = 'POST'
+
         payload = json.dumps(payload)
         app = self.rate_limit('POST', url, data=payload)
 
@@ -137,6 +142,18 @@ class Pensando(object):
             self.changed = True
 
         return app
+
+    def existing_app(self, app_name):
+        """
+            Query the specified app name.
+            Return the requests object or False if the app does not exist
+        """
+        url = '/configs/security/{}/apps/{}'.format('{}', app_name)
+        app = self.rate_limit('GET', url)
+        if app.ok:
+            return app
+
+        return False
 
     def remove_dups(self, policy):
         """
