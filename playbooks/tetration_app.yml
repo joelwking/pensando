@@ -54,6 +54,14 @@
       tenant: default
       namespace: default
 
+    network_security_policy:
+      hostname: '{{ pensando_psm.host }}'
+      username: '{{ pensando_psm.username }}'
+      password: '{{ pensando_psm.password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
   tasks:
     - name: For demonstraton purposes, when a Tetration is available, query and write policy to disk
       block:
@@ -86,6 +94,12 @@
         - item["action"] == "ALLOW"                        # there is an implicit DENY                    
         # - item["consumer_filter_name"] == "EPG-DEV-PUBWIN1:EPG-DEV"
 
+    - name: Delete Policy  
+      network_security_policy:
+        state: absent
+        policy_name: DEMO
+      tags: [bind]
+
     - name: Delete app  
       app:
         state: absent
@@ -100,6 +114,25 @@
     - name: Report App name and version from data
       debug:
         msg: 'App Name: {{ api.adm.raw.name }} version: {{ api.adm.raw.version }} latest: {{ api.adm.raw.latest_adm_version }}'
-    #
-    #  All Finished!
-    #
+
+    - name: Add a network_security_policy which references the app
+      network_security_policy:
+          state: present
+          policy_name: DEMO
+          rules:
+            - apps:
+                - '{{ app_name }}_{{ app_version }}'
+              action: permit
+              from-ip-addresses: 
+                - 198.51.100.0/24
+              to-ip-addresses:
+                - 192.0.2.0/24
+            - proto-ports: 
+                - protocol: udp
+                  ports: '123'
+              action: permit
+              from-ip-addresses: 
+                - 198.18.0.0/15
+              to-ip-addresses: 
+                - 198.18.0.0/15
+      tags: [bind]
