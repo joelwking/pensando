@@ -66,37 +66,72 @@ class Pensando(object):
                 return r
         return r
 
+    def query_policy(self, policy_name=None):
+        """
+            Query the network security policy, returning the policy object
+            If you provide a trailing slash on the url, you will get a 404 NOTFOUND,
+            if you don't provide a trailing slash, you will get a list of policies in 'items'
+            If you provide a trailing slash and a policy name, you will get the single policy requested
+
+        """
+        if policy_name:
+            url = '/configs/security/{}/networksecuritypolicies{}'.format('{}', '/'+ policy_name)
+        else:
+            url = '/configs/security/{}/networksecuritypolicies'
+        
+        return self.rate_limit('GET', url)
+
     def manage_policy(self, params):
         """
             Logic to apply or update an existing policy
-            We expect 'rules' to be a list of dictionaries with the correct keywork and values
+            We expect 'rules' to be a list of dictionaries with the correct keyword and values
 
-            TODO this method is only preliminary code !!!
+            Error code 409  when issuing a POST with an existing policy "already exists in cache"
+                       412  when issuing a POST and a policy by a different name exists "exceeds max allowed polices 1"
+
+            Note: the URL does not need to specify the policy name when POST, but must when PUT
         """
 
         url = '/configs/security/{}/networksecuritypolicies'
 
-        payload = json.dumps({"kind": "NetworkSecurityPolicy",
-                              "api-version": params.get('api_version'),
-                              "meta": {"name": params.get('policy_name'),
-                                       "tenant": params.get('tenant'),
-                                       "namespace": params.get('namespace')
-                                      },
-                              "spec": {"attach-tenant": params.get('attach_tenant'),
-                                       "rules": params.get('rules')
-                                      }
-                              }
-                            )
+        payload = {"kind": "NetworkSecurityPolicy",
+                   "api-version": params.get('api_version'),
+                   "meta": {"name": params.get('policy_name'),
+                            "tenant": params.get('tenant'),
+                            "namespace": params.get('namespace')
+                           },
+                    "spec": {"attach-tenant": params.get('attach_tenant'),
+                             "rules": params.get('rules')
+                            }
+                  }
 
-        policy = self.rate_limit('POST', url, data=payload)
+        policy = self.rate_limit('POST', url, data=json.dumps(payload))
 
-        if policy.status_code == requests.codes.conflict:                   # already exists!
-            self.changed = False
-            # TODO Query the existing policy?
-        else:
+        if policy.status_code == requests.codes.OK:                            # POST worked policy doesn't exist
             self.changed = True
+            return policy
 
+        if policy.status_code == requests.codes.CONFLICT:                      # 409 already exists!
+            policy = self.query_policy(policy_name=params.get('policy_name'))  # query to return existing policy
+
+            if policy.status_code == requests.codes.OK:
+                payload = self.policy_payload(params, payload, policy)
+                self_link = policy.json()['meta']['self-link']
+                policy = self.rate_limit('PUT', self_link, data=json.dumps(payload))
+
+                if policy.status_code == requests.codes.OK:
+                    self.changed = True
+            
         return policy
+
+    def policy_payload(self, params, payload, policy):
+        """
+            Either replace or append the policy, if replace, we have already set the data provided by the user
+        """
+        if params.get('operation') == 'append':
+            payload['spec']['rules'].append(policy.json()['spec']['rules'])
+
+        return payload
 
     def manage_app(self, params):
         """

@@ -22,7 +22,7 @@
 
   vars:
     password: "Pensando0$"                    # I only show it because it is the documented default
-
+    policy_name: quarantine
     #
     #  Yaml format of a policy
     #
@@ -57,26 +57,81 @@
       namespace: default
 
   tasks:
-    - name: Query Policy
+    - name: Query All Policy  (even though only one may be allowed)
       network_security_policy:
         state: query
+
+    - name: Query a Policy
+      network_security_policy:
+        state: query
+        policy_name: '{{ policy_name }}'
 
     - name: Attempt to Delete Policy which does not exist
       network_security_policy:
         state: absent
         policy_name: foo
-
-    - name: Delete Policy which does exist
-      network_security_policy:
-        state: absent
-        policy_name: quarantine
           
     - name: Add a network_security_policy
       network_security_policy:
         state: present
-        policy_name: quarantine
+        policy_name: '{{ policy_name }}'
         rules: '{{ quarantine }}'
-      ignore_errors: True                    # If the policy exists, this will fail
+      ignore_errors: True
+
+    - name: Delete Policy which does exist
+      network_security_policy:
+        state: absent
+        policy_name: '{{ policy_name }}'
+      ignore_errors: True 
+
+    - name: Add a network_security_policy
+      network_security_policy:
+        state: present
+        policy_name: '{{ policy_name }}'
+        rules: '{{ quarantine }}'
+      ignore_errors: True
+
+    - name: Update a network_security_policy
+      network_security_policy:
+        state: present
+        operation: append
+        policy_name: '{{ policy_name }}'
+        rules: 
+          - action: deny
+            from-ip-addresses: 
+              - 198.51.100.0/24
+              - 192.0.2.128/25
+            proto-ports:
+              - ports: '123'
+                protocol: udp
+            to-ip-addresses:
+              - 192.0.2.0/24
+      ignore_errors: True
+
+    - name: Replace a network_security_policy
+      network_security_policy:
+        state: present
+        operation: replace
+        policy_name: '{{ policy_name }}'
+        rules: 
+          - apps: 
+              - "Wordpress-cl3_latest"
+              - "PolicyPubApp_latest"
+            action: permit
+            from-ip-addresses: 
+              - "198.51.100.0/24"
+            to-ip-addresses: 
+              - "192.0.2.0/23"
+          - proto-ports: 
+              - protocol: udp
+                ports: '123'
+              - protocol: tcp
+                ports: '22'
+            action: permit
+            from-ip-addresses: 
+              - "198.18.0.0/24"
+            to-ip-addresses: 
+              - "198.18.0.0/15"
 
     #
     #    --start-at-task "Query app" -v    to skip over network_security_policy
@@ -116,7 +171,8 @@
               ports: "22"
         #    - protocol: tcp
         #      ports: "21-20"                #  first number cannot be higher than second
-    - name: Delete app
+    
+    - name: Create app with empty list, should fail
       app:
         state: present
         app_name: NOPOLICY
