@@ -144,9 +144,13 @@ class Pensando(object):
     def policy_payload(self, params, payload, policy):
         """
             Either replace or append the policy, if replace, we have already set the data provided by the user
+            Use the existing rules and append the rules provided by the user
         """
         if params.get('operation') == 'append':
-            payload['spec']['rules'].extend(policy.json()['spec']['rules'])
+
+            rules = policy.json()['spec']['rules']
+            rules.extend(payload['spec']['rules'])
+            payload['spec']['rules'] = rules
 
         return payload
 

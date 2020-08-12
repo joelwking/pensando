@@ -166,7 +166,9 @@ def main():
         module.fail_json(msg='{}:{}'.format(login.status_code, login.text))
 
     if module.params.get('state') == 'query':
-        url = '/configs/security/{}/apps{}'.format('{}', module.params.get('app_name'))
+        url = '/configs/security/{}/apps'
+        if module.params.get('app_name'):
+            url = '/configs/security/{}/apps/{}'.format('{}', module.params.get('app_name'))
         app = psm.rate_limit('GET', url)
         if app.ok:
             module.exit_json(changed=False, app=app.json())

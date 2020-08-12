@@ -8,7 +8,7 @@
 #
 #      Playbook to test and demonstrate the basic functionality
 #
-#      usage: ./basic_functions.yml -e "password=foo" -v
+#      usage: ./app_tests -e "password=foo" -v
 #
 #  
 - hosts: localhost
@@ -70,10 +70,11 @@
             - protocol: tcp
               ports: "20-21"
 
-    - name: Update app
+    - name: Update app  NOT IMPLEMENTED
       app:
         state: present
         app_name: SAMPLE
         proto_ports:
             - protocol: tcp
               ports: "22"
+      ignore_errors: true

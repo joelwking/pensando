@@ -180,7 +180,7 @@ def main():
         module.fail_json(msg='{}:{}'.format(login.status_code, login.text))
 
     if module.params.get('state') == 'query':
-        policy = psm.query_policy()
+        policy = psm.query_policy(policy_name=module.params.get('policy_name'))
         if policy.ok:
             module.exit_json(changed=False, policy=policy.json())
         else:

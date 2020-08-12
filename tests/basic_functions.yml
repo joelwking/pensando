@@ -61,11 +61,21 @@
     - name: Query All Policy  (even though only one may be allowed)
       network_security_policy:
         state: query
+      register: all_policy
+
+    - name: Reference elements of the Policy
+      debug:
+        msg: '{{ all_policy.policy["items"][0].meta.name }}'
 
     - name: Query a Policy
       network_security_policy:
         state: query
         policy_name: '{{ policy_name }}'
+      register: named_policy
+
+    - name: Reference elements of the Policy
+      debug:
+        msg: '{{ named_policy.policy.meta.name }} : {{named_policy.policy.meta.uuid }}'
 
     - name: Attempt to Delete Policy which does not exist
       network_security_policy:
@@ -123,6 +133,13 @@
         operation: append
         policy_name: '{{ policy_name }}'
         rules: 
+          - apps: 
+              - "Wordpress-cl3_latest"
+            action: permit
+            from-ip-addresses: 
+              - "203.0.113.0/24"
+            to-ip-addresses: 
+              - "203.0.113.0/24"
           - action: deny
             from-ip-addresses: 
               - 198.51.100.0/24
@@ -134,11 +151,22 @@
               - 192.0.2.0/24
       ignore_errors: True
     #
-    #    --start-at-task "Query app" -v    to skip over network_security_policy
+    #    --start-at-task "Query all apps" -v    to skip over network_security_policy
     #
-    - name: Query app
+    - name: Query all apps
       app:
         state: query
+      register: all_apps
+
+    - name: Query app by name
+      app: 
+        state: query
+        app_name: "ACI-Demo-Wordpress_latest"
+      ignore_errors: True
+      register: named_app
+
+    - debug:
+        msg: '{{ named_app.app.meta["self-link"] }}'
 
     - name: Delete app
       app:
