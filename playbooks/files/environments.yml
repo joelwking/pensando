@@ -1,0 +1,38 @@
+---
+#
+#  Environments file, used to map network addressing to applications
+#
+env:
+  PolicyPubApp:
+    dev:
+        from-ip-addresses:
+           - "198.18.64.0/23"
+        to-ip-addresses:
+           - "198.18.64.0/23"
+    test:
+        from-ip-addresses:
+           - "198.18.66.0/23"
+        to-ip-addresses:
+           - "198.18.66.0/23"
+    prod:
+        from-ip-addresses:
+           - "198.18.68.0/23"
+        to-ip-addresses:
+           - "198.18.68.0/23"
+
+  default:
+    dev:
+        from-ip-addresses:
+           - "198.18.128.0/23"
+        to-ip-addresses:
+           - "198.18.128.0/23"
+    test:
+        from-ip-addresses:
+           - "198.18.130.0/23"
+        to-ip-addresses:
+           - "198.18.130.0/23"
+    prod:
+        from-ip-addresses:
+           - "198.18.132.0/23"
+        to-ip-addresses:
+           - "198.18.132.0/23"

@@ -32,11 +32,12 @@
   vars_files:
     - '{{ playbook_dir }}/files/passwords.yml'                  #  Credentials for PSM defined in vaulted file
     - '{{ playbook_dir }}/files/tetration/gui_credentials.yml'  #  Vault if you wish, nothing to see here
+    - '{{ playbook_dir }}/files/environments.yml'               #  Used for network addressing of apps
 
   vars:
-    policy_name: DEMO
     app_name: 'PolicyPubApp'
     app_version: latest
+    app_environment: dev
     api_credentials: '{{ playbook_dir }}/files/tetration/api_credentials.json'
     #  ---------------------------------------
     #  Do not change variables below this line
@@ -95,16 +96,17 @@
         - item["confidence"] >= 0.90                       # example of selecting a subset based on confidence
         - item["action"] == "ALLOW"                        # there is an implicit DENY                    
 
-####  Currently there can be only one policy, determine the name of the policy
-
+     #
+     # Currently there can be only one policy, determine the name of the policy
+     #
     - name: Query the name of the existing security policy
       network_security_policy:
         state: query
-      register: all_policy
+      register: policy
 
     - name: Display the policy name 
       debug:
-        msg: 'The existing policy name is {{ all_policy.policy["items"][0].meta.name }}'
+        msg: 'The existing policy name is {{ policy.policy["items"][0].meta.name }}'
 
     - name: Add app
       app:
@@ -112,18 +114,16 @@
         app_name: '{{ app_name }}_{{ app_version }}_{{ time_stamp }}'
         proto_ports: '{{ proto_ports }}'
 
-    - name: Add a network_security_policy which references the app
+    - name: Update the network_security_policy and reference the app
       network_security_policy:
           state: present
           operation: append
-          policy_name: '{{ all_policy.policy["items"][0].meta.name }}'
+          policy_name: '{{ policy.policy["items"][0].meta.name }}'
           rules:
             - apps:
                 - '{{ app_name }}_{{ app_version }}_{{ time_stamp }}'
               action: permit
               from-ip-addresses: 
-                - 198.51.100.0/24
+                '{{ env[app_name][app_environment]["from-ip-addresses"] }}'
               to-ip-addresses:
-                - 192.0.2.0/24
-
-      tags: [bind]
+                '{{ env[app_name][app_environment]["to-ip-addresses"] }}'
