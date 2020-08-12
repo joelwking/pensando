@@ -10,7 +10,7 @@
 #
 #      usage: ./basic_functions.yml -e "password=foo"
 #                                    --start-at-task "Query app" -v
-#
+#                                    --step
 #
 #  
 - hosts: localhost
@@ -23,8 +23,9 @@
   vars:
     password: "Pensando0$"                    # I only show it because it is the documented default
     policy_name: quarantine
+    psm_host: 10.255.40.39
     #
-    #  Yaml format of a policy
+    #  YAML format of a policy
     #
     quarantine:
       - action: deny
@@ -41,7 +42,7 @@
 
   module_defaults:
     network_security_policy:
-      hostname: 10.255.40.39
+      hostname: '{{ psm_host }}'
       username: admin
       password: '{{ password }}'
       api_version: v1
@@ -49,7 +50,7 @@
       namespace: default
 
     app:
-      hostname: 10.255.40.39
+      hostname: '{{ psm_host }}'
       username: admin
       password: '{{ password }}'
       api_version: v1
@@ -91,23 +92,6 @@
         rules: '{{ quarantine }}'
       ignore_errors: True
 
-    - name: Update a network_security_policy
-      network_security_policy:
-        state: present
-        operation: append
-        policy_name: '{{ policy_name }}'
-        rules: 
-          - action: deny
-            from-ip-addresses: 
-              - 198.51.100.0/24
-              - 192.0.2.128/25
-            proto-ports:
-              - ports: '123'
-                protocol: udp
-            to-ip-addresses:
-              - 192.0.2.0/24
-      ignore_errors: True
-
     - name: Replace a network_security_policy
       network_security_policy:
         state: present
@@ -133,6 +117,22 @@
             to-ip-addresses: 
               - "198.18.0.0/15"
 
+    - name: Update a network_security_policy
+      network_security_policy:
+        state: present
+        operation: append
+        policy_name: '{{ policy_name }}'
+        rules: 
+          - action: deny
+            from-ip-addresses: 
+              - 198.51.100.0/24
+              - 192.0.2.128/25
+            proto-ports:
+              - ports: '123'
+                protocol: udp
+            to-ip-addresses:
+              - 192.0.2.0/24
+      ignore_errors: True
     #
     #    --start-at-task "Query app" -v    to skip over network_security_policy
     #
@@ -171,6 +171,14 @@
               ports: "22"
         #    - protocol: tcp
         #      ports: "21-20"                #  first number cannot be higher than second
+
+    - name: Create app which currently exists
+      app:
+        state: present
+        app_name: SAMPLE
+        proto_ports:
+          - protocol: icmp
+      ignore_errors: True                    # Should fail
     
     - name: Create app with empty list, should fail
       app:

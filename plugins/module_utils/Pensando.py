@@ -10,6 +10,16 @@ import requests.packages.urllib3
 requests.packages.urllib3.disable_warnings()
 
 
+class ConnectionError(object):
+    """
+        Class to allow the return of an object when Connection Errors are encountered
+    """
+    def __init__(self, status_code=504, text='Timeout'):
+        self.ok = False
+        self.status_code = status_code
+        self.text = text
+
+
 class Pensando(object):
     """
         Class to manage the connection with the Pensando Policy and Service Manager (PSM)
@@ -43,7 +53,10 @@ class Pensando(object):
 
         payload = json.dumps(dict(username=self.username, password=self.password, tenant=tenant))
 
-        r = requests.request('POST', 'https://{}/{}/login'.format(self.hostname, self.api_version), headers=self.headers, data=payload, verify=self.verify)
+        try:
+            r = requests.request('POST', 'https://{}/{}/login'.format(self.hostname, self.api_version), headers=self.headers, data=payload, verify=self.verify)
+        except requests.ConnectionError as e:
+            return ConnectionError(text='Timeout in Login: {}'.format(e))           
 
         if r.ok:
             self.cookie = dict(sid=r.cookies.get('sid'))
@@ -59,7 +72,12 @@ class Pensando(object):
         url = url.format(self.hostname, self.api_version)
 
         for _ in range(self.rate_limit_retry):
-            r = requests.request(verb, url, verify=self.verify, cookies=self.cookie, **kwargs)
+
+            try:
+                r = requests.request(verb, url, verify=self.verify, cookies=self.cookie, **kwargs)
+            except requests.ConnectionError as e:
+                return ConnectionError(text='Timeout in rate_limit: {}'.format(e))
+
             if r.status_code == requests.codes.TOO_MANY_REQUESTS:
                 time.sleep(int(r.headers.get("Retry-After", 1)))    # TODO, verify, this is from Meraki
             else:
@@ -72,12 +90,11 @@ class Pensando(object):
             If you provide a trailing slash on the url, you will get a 404 NOTFOUND,
             if you don't provide a trailing slash, you will get a list of policies in 'items'
             If you provide a trailing slash and a policy name, you will get the single policy requested
-
         """
+        url = '/configs/security/{}/networksecuritypolicies'
+
         if policy_name:
             url = '/configs/security/{}/networksecuritypolicies{}'.format('{}', '/'+ policy_name)
-        else:
-            url = '/configs/security/{}/networksecuritypolicies'
         
         return self.rate_limit('GET', url)
 
@@ -116,7 +133,7 @@ class Pensando(object):
 
             if policy.status_code == requests.codes.OK:
                 payload = self.policy_payload(params, payload, policy)
-                self_link = policy.json()['meta']['self-link']
+                self_link = policy.json()['meta']['self-link']                 # pull the resource from self-link
                 policy = self.rate_limit('PUT', self_link, data=json.dumps(payload))
 
                 if policy.status_code == requests.codes.OK:
@@ -129,7 +146,7 @@ class Pensando(object):
             Either replace or append the policy, if replace, we have already set the data provided by the user
         """
         if params.get('operation') == 'append':
-            payload['spec']['rules'].append(policy.json()['spec']['rules'])
+            payload['spec']['rules'].extend(policy.json()['spec']['rules'])
 
         return payload
 
@@ -161,18 +178,14 @@ class Pensando(object):
             pass                      # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
 
         if self.existing_app(params.get('app_name')):
-            verb = 'PUT'
-        else:
-            verb = 'POST'
+            pass                      # Allow POST to fail, with RC=409 ["already exists in cache"]
 
-        payload = json.dumps(payload)
-        app = self.rate_limit('POST', url, data=payload)
+        app = self.rate_limit('POST', url, data=json.dumps(payload))
 
         if app.status_code == requests.codes.bad_request:                # payload is incorrect
             self.changed = False
         if app.status_code == requests.codes.conflict:                   # already exists!
             self.changed = False
-            # TODO Query the existing policy?
         else:
             self.changed = True
 
