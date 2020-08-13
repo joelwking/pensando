@@ -18,7 +18,7 @@
 #
 #               ./workflow_use_case.yml -v --ask-vault-pass \
 #                                    -e 'api_credentials=/home/administrator/ansible/playbooks/files/tetration/api_credentials.json' \
-#                                        'app_name="Wordpress-cl3" app_version=latest'
+#                                        'app_name="Wordpress-cl3" app_version=v2'
 #
 #             To demo pushing a policy from disk to the PSM
 #  
@@ -98,17 +98,20 @@
         - item["confidence"] >= 0.90                       # example of selecting a subset based on confidence
         - item["action"] == "ALLOW"                        # there is an implicit DENY                    
 
-     #
-     # Currently there can be only one policy, determine the name of the policy
-     #
+      #
+      # Currently there can be only one policy, determine the name of the policy
+      #
     - name: Query the name of the existing security policy
       network_security_policy:
         state: query
       register: policy
-
-    - name: Display the policy name 
-      debug:
-        msg: 'The existing policy name is {{ policy.policy["items"][0].meta.name }}'
+      # 'The existing policy name is {{ policy.policy["items"][0].meta.name }}'
+    
+    - name: Verify there is an existing network security policy
+      assert:
+        that:
+          - (policy.policy["items"] | bool) != None   
+        fail_msg: 'No Network Security Policy exists!'
 
     - name: Add app
       app:
@@ -128,4 +131,4 @@
               from-ip-addresses: 
                 '{{ env[app_name][app_environment]["from-ip-addresses"] | default(dflt_from) }}'
               to-ip-addresses:
-                '{{ env[app_name][app_environment]["to-ip-addresses"] | default(dflt_from) }}'
+                '{{ env[app_name][app_environment]["to-ip-addresses"] | default(dflt_to) }}'
