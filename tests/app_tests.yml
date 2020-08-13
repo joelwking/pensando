@@ -1,0 +1,80 @@
+#!/usr/bin/ansible-playbook
+---
+#
+#      Copyright (c) 2020 World Wide Technology, LLC
+#      All rights reserved.
+#
+#      author: Joel W. King, World Wide Technology
+#
+#      Playbook to test and demonstrate the basic functionality
+#
+#      usage: ./app_tests -e "password=foo" -v
+#
+#  
+- hosts: localhost
+  gather_facts: no
+  connection: local
+
+  vars_files:
+    # None
+
+  vars:
+    password: "Pensando0$"                    # I only show it because it is the documented default
+
+    #
+    #  Yaml format of a policy
+    #
+    quarantine:
+      - action: deny
+        from-ip-addresses: 
+          - 198.51.100.0/24
+        proto-ports:
+          - ports: '123'
+            protocol: udp
+        to-ip-addresses:
+          - 192.0.2.0/24
+
+  collections:
+    - joelwking.pensando
+
+  module_defaults:
+    app:
+      hostname: 10.255.40.39
+      username: admin
+      password: '{{ password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
+  tasks:
+    - name: Query all apps
+      app:
+        state: query
+
+    - name: Query specified app
+      app:
+        app_name: SAMPLE
+        state: query
+      ignore_errors: true
+
+    - name: Delete app
+      app:
+        state: absent
+        app_name: SAMPLE
+
+    - name: Create app
+      app:
+        state: present
+        app_name: SAMPLE
+        proto_ports:
+            - protocol: tcp
+              ports: "20-21"
+
+    - name: Update app  NOT IMPLEMENTED
+      app:
+        state: present
+        app_name: SAMPLE
+        proto_ports:
+            - protocol: tcp
+              ports: "22"
+      ignore_errors: true

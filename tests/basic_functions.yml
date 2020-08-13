@@ -10,7 +10,7 @@
 #
 #      usage: ./basic_functions.yml -e "password=foo"
 #                                    --start-at-task "Query app" -v
-#
+#                                    --step
 #
 #  
 - hosts: localhost
@@ -22,9 +22,10 @@
 
   vars:
     password: "Pensando0$"                    # I only show it because it is the documented default
-
+    policy_name: quarantine
+    psm_host: 10.255.40.39
     #
-    #  Yaml format of a policy
+    #  YAML format of a policy
     #
     quarantine:
       - action: deny
@@ -41,7 +42,7 @@
 
   module_defaults:
     network_security_policy:
-      hostname: 10.255.40.39
+      hostname: '{{ psm_host }}'
       username: admin
       password: '{{ password }}'
       api_version: v1
@@ -49,7 +50,7 @@
       namespace: default
 
     app:
-      hostname: 10.255.40.39
+      hostname: '{{ psm_host }}'
       username: admin
       password: '{{ password }}'
       api_version: v1
@@ -57,33 +58,115 @@
       namespace: default
 
   tasks:
-    - name: Query Policy
+    - name: Query All Policy  (even though only one may be allowed)
       network_security_policy:
         state: query
+      register: all_policy
+
+    - name: Reference elements of the Policy
+      debug:
+        msg: '{{ all_policy.policy["items"][0].meta.name }}'
+
+    - name: Query a Policy
+      network_security_policy:
+        state: query
+        policy_name: '{{ policy_name }}'
+      register: named_policy
+
+    - name: Reference elements of the Policy
+      debug:
+        msg: '{{ named_policy.policy.meta.name }} : {{named_policy.policy.meta.uuid }}'
 
     - name: Attempt to Delete Policy which does not exist
       network_security_policy:
         state: absent
         policy_name: foo
-
-    - name: Delete Policy which does exist
-      network_security_policy:
-        state: absent
-        policy_name: quarantine
           
     - name: Add a network_security_policy
       network_security_policy:
         state: present
-        policy_name: quarantine
+        policy_name: '{{ policy_name }}'
         rules: '{{ quarantine }}'
-      ignore_errors: True                    # If the policy exists, this will fail
+      ignore_errors: True
 
+    - name: Delete Policy which does exist
+      network_security_policy:
+        state: absent
+        policy_name: '{{ policy_name }}'
+      ignore_errors: True 
+
+    - name: Add a network_security_policy
+      network_security_policy:
+        state: present
+        policy_name: '{{ policy_name }}'
+        rules: '{{ quarantine }}'
+      ignore_errors: True
+
+    - name: Replace a network_security_policy
+      network_security_policy:
+        state: present
+        operation: replace
+        policy_name: '{{ policy_name }}'
+        rules: 
+          - apps: 
+              - "Wordpress-cl3_latest"
+              - "PolicyPubApp_latest"
+            action: permit
+            from-ip-addresses: 
+              - "198.51.100.0/24"
+            to-ip-addresses: 
+              - "192.0.2.0/23"
+          - proto-ports: 
+              - protocol: udp
+                ports: '123'
+              - protocol: tcp
+                ports: '22'
+            action: permit
+            from-ip-addresses: 
+              - "198.18.0.0/24"
+            to-ip-addresses: 
+              - "198.18.0.0/15"
+
+    - name: Update a network_security_policy
+      network_security_policy:
+        state: present
+        operation: append
+        policy_name: '{{ policy_name }}'
+        rules: 
+          - apps: 
+              - "Wordpress-cl3_latest"
+            action: permit
+            from-ip-addresses: 
+              - "203.0.113.0/24"
+            to-ip-addresses: 
+              - "203.0.113.0/24"
+          - action: deny
+            from-ip-addresses: 
+              - 198.51.100.0/24
+              - 192.0.2.128/25
+            proto-ports:
+              - ports: '123'
+                protocol: udp
+            to-ip-addresses:
+              - 192.0.2.0/24
+      ignore_errors: True
     #
-    #    --start-at-task "Query app" -v    to skip over network_security_policy
+    #    --start-at-task "Query all apps" -v    to skip over network_security_policy
     #
-    - name: Query app
+    - name: Query all apps
       app:
         state: query
+      register: all_apps
+
+    - name: Query app by name
+      app: 
+        state: query
+        app_name: "ACI-Demo-Wordpress_latest"
+      ignore_errors: True
+      register: named_app
+
+    - debug:
+        msg: '{{ named_app.app.meta["self-link"] }}'
 
     - name: Delete app
       app:
@@ -116,7 +199,16 @@
               ports: "22"
         #    - protocol: tcp
         #      ports: "21-20"                #  first number cannot be higher than second
-    - name: Delete app
+
+    - name: Create app which currently exists
+      app:
+        state: present
+        app_name: SAMPLE
+        proto_ports:
+          - protocol: icmp
+      ignore_errors: True                    # Should fail
+    
+    - name: Create app with empty list, should fail
       app:
         state: present
         app_name: NOPOLICY

@@ -1,0 +1,134 @@
+#!/usr/bin/ansible-playbook
+---
+#
+#      Copyright (c) 2020 World Wide Technology, LLC
+#      All rights reserved.
+#
+#      author: Joel W. King  @joelwking
+#
+#      Demonstration of a sample workflow use case
+#
+#      usage: 
+#              
+#             To only execute the Tetration portion of the playbook
+#
+#               ./workflow_use_case.yml -v --tags tetration --ask-vault-pass
+#             
+#             When you have connectivity to a Tetration for demonstration purpose
+#
+#               ./workflow_use_case.yml -v --ask-vault-pass \
+#                                    -e 'api_credentials=/home/administrator/ansible/playbooks/files/tetration/api_credentials.json' \
+#                                        'app_name="Wordpress-cl3" app_version=v2'
+#
+#             To demo pushing a policy from disk to the PSM
+#  
+#               ./workflow_use_case.yml -v --skip-tags tetration --ask-vault-pass
+#  
+#
+- hosts: localhost
+  gather_facts: yes
+  connection: local
+
+  vars_files:
+    - '{{ playbook_dir }}/files/passwords.yml'                  #  Credentials for PSM defined in vaulted file
+    - '{{ playbook_dir }}/files/tetration/gui_credentials.yml'  #  Vault if you wish, nothing to see here
+    - '{{ playbook_dir }}/files/environments.yml'               #  Used for network addressing of apps
+
+  vars:
+    app_name: 'PolicyPubApp'
+    app_version: latest
+    app_environment: dev
+    api_credentials: '{{ playbook_dir }}/files/tetration/api_credentials.json'
+    #  ---------------------------------------
+    #  Do not change variables below this line
+    #  ---------------------------------------
+    proto_ports: []
+    time_stamp: "{{ ansible_date_time.iso8601 | replace(':','')}}"
+    dflt_to: '{{ env["default"][app_environment]["to-ip-addresses"] }}'
+    dflt_from: '{{ env["default"][app_environment]["from-ip-addresses"] }}'
+
+  collections:
+    - joelwking.pensando
+
+  module_defaults:
+    app:
+      hostname: '{{ pensando_psm.host }}'
+      username: '{{ pensando_psm.username }}'
+      password: '{{ pensando_psm.password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
+    network_security_policy:
+      hostname: '{{ pensando_psm.host }}'
+      username: '{{ pensando_psm.username }}'
+      password: '{{ pensando_psm.password }}'
+      api_version: v1
+      tenant: default
+      namespace: default
+
+  tasks:
+    - name: For demonstraton purposes, when a Tetration is available, query and write policy to disk
+      block:
+        - name: Query policy using the API via Tetration Application module
+          tetration_application:
+            application: '{{ app_name }}'
+            version: '{{ app_version }}'
+            api_host: '{{ atc_tetration.host }}'
+            api_cfile: '{{ api_credentials }}'
+            api_verify: False
+          register: api
+
+        - name: Write app policy to a file for future reference
+          copy: 
+            content: '{{ api.ansible_facts | to_nice_json(indent=2) }}' 
+            dest: '{{ playbook_dir }}/files/{{ app_name }}.json'
+
+      tags: [tetration]
+
+    - name: Read Tetration policy from disk
+      set_fact: 
+        api: "{{ lookup('file', '{{ playbook_dir }}/files/{{ app_name }}.json' ) }}"
+
+    - name: Create list of protocols and ports
+      set_fact:
+        proto_ports: "{{ proto_ports + [ item['proto-ports'] ] }}"
+      loop: '{{ api.adm.policy }}'
+      when:
+        - item["confidence"] >= 0.90                       # example of selecting a subset based on confidence
+        - item["action"] == "ALLOW"                        # there is an implicit DENY                    
+
+      #
+      # Currently there can be only one policy, determine the name of the policy
+      #
+    - name: Query the name of the existing security policy
+      network_security_policy:
+        state: query
+      register: policy
+      # 'The existing policy name is {{ policy.policy["items"][0].meta.name }}'
+    
+    - name: Verify there is an existing network security policy
+      assert:
+        that:
+          - (policy.policy["items"] | bool) != None   
+        fail_msg: 'No Network Security Policy exists!'
+
+    - name: Add app
+      app:
+        state: present
+        app_name: '{{ app_name }}_{{ app_version }}_{{ time_stamp }}'
+        proto_ports: '{{ proto_ports }}'
+
+    - name: Update the network_security_policy and reference the app
+      network_security_policy:
+          state: present
+          operation: append
+          policy_name: '{{ policy.policy["items"][0].meta.name }}'
+          rules:
+            - apps:
+                - '{{ app_name }}_{{ app_version }}_{{ time_stamp }}'
+              action: permit
+              from-ip-addresses: 
+                '{{ env[app_name][app_environment]["from-ip-addresses"] | default(dflt_from) }}'
+              to-ip-addresses:
+                '{{ env[app_name][app_environment]["to-ip-addresses"] | default(dflt_to) }}'

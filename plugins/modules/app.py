@@ -18,7 +18,7 @@ version_added: "2.9"
 
 description:
     - An App is a network service defined either by a "protocol, port" pair, or by an application level
-    - gateway (i.e. "ALG"). This module programatically manages the policy using the API of the PSM.
+    - gateway (i.e. "ALG"). This module programatically manages the apps using the API of the PSM.
 
 options:
     tenant:
@@ -51,7 +51,7 @@ options:
     state:
         description:
             - Use 'present' or 'absent' to add or remove
-            - Use 'query' for listing the current policy
+            - Use 'query' for listing the current apps
         required: false
         default: 'present'
 
@@ -146,9 +146,9 @@ def main():
             password=dict(required=True, no_log=True),
             state=dict(required=False, default='present'),
             tenant=dict(required=False, default='default'),
-            alg=dict(required=False, type='list', default=[]),
+            alg=dict(required=False, type='dict', default={}),
             proto_ports=dict(required=False, type='list', default=[]),
-            app_name=dict(required=False, default='default'),
+            app_name=dict(required=False, default=''),
             namespace=dict(required=False, default='default')
             ),
             add_file_common_args=True,
@@ -167,31 +167,35 @@ def main():
 
     if module.params.get('state') == 'query':
         url = '/configs/security/{}/apps'
-        policy = psm.rate_limit('GET', url)
-        if policy.ok:
-            module.exit_json(changed=False, policy=policy.json())
+        if module.params.get('app_name'):
+            url = '/configs/security/{}/apps/{}'.format('{}', module.params.get('app_name'))
+        app = psm.rate_limit('GET', url)
+        if app.ok:
+            module.exit_json(changed=False, app=app.json())
+        elif app.status_code == requests.codes.NOT_FOUND:
+            module.exit_json(changed=False, app=dict(items=[]))
         else:
-            module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
+            module.fail_json(msg='{}:{}'.format(app.status_code, app.text))
 
     elif module.params.get('state') == 'absent':
         url = '/configs/security/{}/apps/{}'.format('{}', module.params.get('app_name'))
-        policy = psm.rate_limit('DELETE', url)
-        if policy.status_code == requests.codes.NOT_FOUND:
-            module.exit_json(changed=False, policy=policy.json())
-        elif policy.ok:
-            module.exit_json(changed=True, policy=policy.json())
+        app = psm.rate_limit('DELETE', url)
+        if app.status_code == requests.codes.NOT_FOUND:
+            module.exit_json(changed=False, app=app.json())
+        elif app.ok:
+            module.exit_json(changed=True, app=app.json())
 
     elif module.params.get('state') == 'present':
-        policy = psm.manage_app(module.params)
-        if policy.ok:
-            module.exit_json(changed=psm.changed, policy=policy.json())
+        app = psm.manage_app(module.params)
+        if app.ok:
+            module.exit_json(changed=psm.changed, app=app.json())
         else:
-            module.fail_json(msg='{}:{}'.format(policy.status_code, policy.text))
+            module.fail_json(msg='{}:{}'.format(app.status_code, app.text))
 
     else:
         module.fail_json(msg='Unknown state specified, must be "query", "absent", or "present"')
 
-    module.fail_json(msg='Unexpected failure:{}:{}'.format(policy.status_code, policy.text))
+    module.fail_json(msg='Unexpected failure:{}:{}'.format(app.status_code, app.text))
 
 
 if __name__ == '__main__':

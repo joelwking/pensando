@@ -22,6 +22,7 @@ RUN apt-get update && \
     pip install requests && \
     pip install pyopenssl  && \
     pip install pydevd  && \
+    pip install tetpyclient && \
     pip install ansible-lint  && \
     apt-add-repository --yes --update ppa:ansible/ansible  && \
     apt-get install ansible -y

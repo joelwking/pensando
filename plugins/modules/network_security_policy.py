@@ -38,8 +38,9 @@ options:
     policy_name:
         description:
             - Name of the network security policy (only one network security policy is currently allowed)
+            - The default is a null string, which indicates return all policies
         required: false
-        default: 'default'
+        default: ''
 
     attach_tenant:
         description:
@@ -58,6 +59,13 @@ options:
             - Use 'query' for listing the current policy
         required: false
         default: 'present'
+
+    operation:
+        description:
+          - Use 'replace' to replace all entries of an existing policy
+          - Use 'append' to append the provided rules to an existing policy
+        required: false
+        default: 'replace'
 
     username:
         description:
@@ -146,13 +154,14 @@ def main():
         argument_spec=dict(
             hostname=dict(required=True),
             api_version=dict(required=False, default='v1'),
-            username=dict(required=True,),
+            username=dict(required=True),
             password=dict(required=True, no_log=True),
             state=dict(required=False, default='present'),
+            operation=dict(required=False, default='replace'),
             tenant=dict(required=False, default='default'),
             rules=dict(required=False, type='list'),
             attach_tenant=dict(required=False, default=True, type='bool'),
-            policy_name=dict(required=False, default='default'),
+            policy_name=dict(required=False, default=''),
             namespace=dict(required=False, default='default')
             ),
             check_invalid_arguments=True,
@@ -171,8 +180,7 @@ def main():
         module.fail_json(msg='{}:{}'.format(login.status_code, login.text))
 
     if module.params.get('state') == 'query':
-        url = '/configs/security/{}/networksecuritypolicies'
-        policy = psm.rate_limit('GET', url)
+        policy = psm.query_policy(policy_name=module.params.get('policy_name'))
         if policy.ok:
             module.exit_json(changed=False, policy=policy.json())
         else:
