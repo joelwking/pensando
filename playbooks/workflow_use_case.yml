@@ -44,6 +44,8 @@
     #  ---------------------------------------
     proto_ports: []
     time_stamp: "{{ ansible_date_time.iso8601 | replace(':','')}}"
+    dflt_to: '{{ env["default"][app_environment]["to-ip-addresses"] }}'
+    dflt_from: '{{ env["default"][app_environment]["from-ip-addresses"] }}'
 
   collections:
     - joelwking.pensando
@@ -124,6 +126,6 @@
                 - '{{ app_name }}_{{ app_version }}_{{ time_stamp }}'
               action: permit
               from-ip-addresses: 
-                '{{ env[app_name][app_environment]["from-ip-addresses"] }}'
+                '{{ env[app_name][app_environment]["from-ip-addresses"] | default(dflt_from) }}'
               to-ip-addresses:
-                '{{ env[app_name][app_environment]["to-ip-addresses"] }}'
+                '{{ env[app_name][app_environment]["to-ip-addresses"] | default(dflt_from) }}'
