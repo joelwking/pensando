@@ -1,6 +1,9 @@
 ---
 #
-#  Environments file, used to map network addressing to applications
+#  Environments file, used to map network addressing to applications. 
+#
+#  Add as many application names and environments and network addresses as necessary.
+#  Refer to sample playbook 'workflow_use_case.yml' for a usage example.
 #
 env:
   PolicyPubApp:
