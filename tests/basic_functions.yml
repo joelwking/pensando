@@ -109,7 +109,7 @@
         policy_name: '{{ policy_name }}'
         rules: 
           - apps: 
-              - "Wordpress-cl3_latest"
+              - "Wordpress-cl3_v2"
               - "PolicyPubApp_latest"
             action: permit
             from-ip-addresses: 
@@ -126,6 +126,7 @@
               - "198.18.0.0/24"
             to-ip-addresses: 
               - "198.18.0.0/15"
+      ignore_errors: True
 
     - name: Update a network_security_policy
       network_security_policy:
@@ -134,7 +135,7 @@
         policy_name: '{{ policy_name }}'
         rules: 
           - apps: 
-              - "Wordpress-cl3_latest"
+              - "Wordpress-cl3_v2"
             action: permit
             from-ip-addresses: 
               - "203.0.113.0/24"

@@ -164,7 +164,6 @@ def main():
             policy_name=dict(required=False, default=''),
             namespace=dict(required=False, default='default')
             ),
-            check_invalid_arguments=True,
             add_file_common_args=True,
             supports_check_mode=False
         )

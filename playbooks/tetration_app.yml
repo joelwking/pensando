@@ -37,6 +37,7 @@
     app_name: 'PolicyPubApp'
     app_version: latest
     api_credentials: '{{ playbook_dir }}/files/tetration/api_credentials.json'
+    policy_name: DEMO
     #
     #  No variables changes below this line
     #  ------------------------------------
@@ -97,7 +98,7 @@
     - name: Delete Policy  
       network_security_policy:
         state: absent
-        policy_name: DEMO
+        policy_name: '{{ policy_name }}'
       tags: [bind]
 
     - name: Delete app  
@@ -118,7 +119,7 @@
     - name: Add a network_security_policy which references the app
       network_security_policy:
           state: present
-          policy_name: DEMO
+          policy_name: '{{ policy_name }}'
           rules:
             - apps:
                 - '{{ app_name }}_{{ app_version }}'

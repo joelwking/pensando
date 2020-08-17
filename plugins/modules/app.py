@@ -84,7 +84,7 @@ author:
 
 EXAMPLES = '''
 
-  
+
   module_defaults:
     app:
       hostname: 10.255.40.39

@@ -5,7 +5,7 @@ The demonstration environment used an AWS EC2 instance running Ansible tower to 
 <img src="demo_topology_Ansible_Tower_laptop.png" alt="topology" width="600" height="300"/>
 
 ### Ansible Tower
-To execute the code and playbooks on Ansible Tower, the configuration was modified as follows:
+To execute the code and playbooks on Ansible Tower, version 3.6.4 with Ansible 2.9.7. 
 
 #### /etc/ansible/ansible.cfg
 The base configuration file was modified to specify the collection and module locations:

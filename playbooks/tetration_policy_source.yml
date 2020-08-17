@@ -24,7 +24,7 @@
 
   vars:
     api_credentials: /home/administrator/ansible/playbooks/files/tetration/api_credentials.json
-
+    policy_name: 'DEMO'
     #
     #   Variables for manipulating data format from Tetraion
     #
@@ -56,7 +56,7 @@
       register: api
       tags: [tetration]
 
-    - name: TODO Manipulate the data from Tetration in this playbook
+    - name: Manipulate the data from Tetration in this playbook
       block: 
         - debug:
             msg: '{{ item.l4_params }}'
@@ -87,24 +87,17 @@
             pseudo_acl: "{{ pseudo_acl + [ {'action': action, 'from-ip-addresses': from_ip_addresses, 'to-ip-addresses': to_ip_addresses, 'proto-ports': proto_ports} ] }}"
           vars:
             action: permit
-            from_ip_addresses: ['0.0.0.0/0']                          # TODO
-            to_ip_addresses: ['0.0.0.0/0']                            #  TODO
+            from_ip_addresses: ['0.0.0.0/0']
+            to_ip_addresses: ['0.0.0.0/0']
             proto_ports: ["{{ {'protocol': acl_protocol[item.proto], 'ports': item.port[0] | string} }}"]
           loop: '{{ l4_params }}'
-          when: acl_protocol[item.proto] != 'icmp'                    # ICMP cannot specify ports, ignore  TODO
+          when: acl_protocol[item.proto] != 'icmp'                    # ICMP cannot specify ports, ignore
 
-          #
-          # TODO Update not yet implemented, delete if it currently exists
-          #
-        - name: Delete Policy  
-          network_security_policy:
-              state: absent
-              policy_name: tetration
-
-    - name: Add a network_security_policy
+    - name: Append to the network_security_policy
       network_security_policy:
           state: present
-          policy_name: tetration
+          operation: append
+          policy_name: '{{ policy_name }}'
           rules: '{{ pseudo_acl }}'
 
     #
