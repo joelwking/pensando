@@ -2,7 +2,7 @@
 The demonstration environment used an AWS EC2 instance running Ansible tower to update apps and policy on a PSM running in the World Wide Technology Advanced Technology Center (ATC). 
 
 ### Diagram
-<img src="demo_topology_Ansible_Tower_laptop.png" alt="topology" width="600" height="300"/>
+<img src="demo_topology_Ansible_Tower_laptop.png" alt="topology"/>
 
 ### Ansible Tower
 To execute the code and playbooks on Ansible Tower, version 3.6.4 with Ansible 2.9.7. 
