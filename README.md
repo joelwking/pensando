@@ -32,6 +32,8 @@ The sample Ansible modules and playbooks in this repository, and using the prior
 #### Topology Diagram
 <img src="docs/images/ERSPAN.png" alt="ERSPAN Use Case"/>
 
+Once the policy is enabled on the PSM, it is propagated to the associated Distributed Services Cards (DSC). 
+
 ## Playbooks
 These playbooks are for testing, documentation and demonstration purposes. They illustrate adding, deleting and updating the network security policy and deleting and adding apps, and referencing apps in network security policy.
 
