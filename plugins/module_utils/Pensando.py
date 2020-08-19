@@ -2,7 +2,14 @@
 #
 #     Copyright (c) 2020 World Wide Technology, LLC
 #     All rights reserved.
-
+#
+#     author: Joel W. King  @joelwking
+#
+#     linter: flake8
+#         [flake8]
+#         max-line-length = 160
+#         ignore = E402
+#
 import time
 import json
 import requests
@@ -56,7 +63,7 @@ class Pensando(object):
         try:
             r = requests.request('POST', 'https://{}/{}/login'.format(self.hostname, self.api_version), headers=self.headers, data=payload, verify=self.verify)
         except requests.ConnectionError as e:
-            return ConnectionError(text='Timeout in Login: {}'.format(e))           
+            return ConnectionError(text='Timeout in Login: {}'.format(e))
 
         if r.ok:
             self.cookie = dict(sid=r.cookies.get('sid'))
@@ -79,7 +86,7 @@ class Pensando(object):
                 return ConnectionError(text='Timeout in rate_limit: {}'.format(e))
 
             if r.status_code == requests.codes.TOO_MANY_REQUESTS:
-                time.sleep(int(r.headers.get("Retry-After", 1)))    # TODO, verify, this is from Meraki
+                time.sleep(int(r.headers.get("Retry-After", 1)))    # TODO, verify
             else:
                 return r
         return r
@@ -94,8 +101,8 @@ class Pensando(object):
         url = '/configs/security/{}/networksecuritypolicies'
 
         if policy_name:
-            url = '/configs/security/{}/networksecuritypolicies{}'.format('{}', '/'+ policy_name)
-        
+            url = '/configs/security/{}/networksecuritypolicies{}'.format('{}', '/' + policy_name)
+
         return self.rate_limit('GET', url)
 
     def manage_policy(self, params):
@@ -117,8 +124,8 @@ class Pensando(object):
                             "tenant": params.get('tenant'),
                             "namespace": params.get('namespace')
                            },
-                    "spec": {"attach-tenant": params.get('attach_tenant'),
-                             "rules": params.get('rules')
+                   "spec": {"attach-tenant": params.get('attach_tenant'),
+                            "rules": params.get('rules')
                             }
                   }
 
@@ -138,7 +145,7 @@ class Pensando(object):
 
                 if policy.status_code == requests.codes.OK:
                     self.changed = True
-            
+
         return policy
 
     def policy_payload(self, params, payload, policy):
@@ -156,9 +163,16 @@ class Pensando(object):
 
     def manage_app(self, params):
         """
-            Logic to apply or update an App
+            Logic to create an App. We have not implemented updating existing apps. If you need to update an app,
+            create a new app with a unique name, then update the network security policy to reference the new app,
+            then delete the old app.
 
-            TODO this method is only preliminary code !!!
+            This is a similar approach to the method used to update ACLs on Cisco routers, create a new ACL, then
+            refrence the new ACL on the interface.
+
+            We check for an existing app name and payload, but at this point allow the API to fail.
+
+            Return the Requests object which contains the details of the app.
         """
 
         url = '/configs/security/{}/apps'
@@ -169,7 +183,7 @@ class Pensando(object):
                             "tenant": params.get('tenant'),
                             "namespace": params.get('namespace')
                            },
-                    "spec": {}
+                   "spec": {}
                   }
 
         if params.get('alg'):
@@ -177,12 +191,11 @@ class Pensando(object):
         if params.get('proto_ports'):
             payload['spec']['proto-ports'] = self.remove_dups(params.get('proto_ports'))
 
-        # Verify the user specified 'alg' or 'proto_ports', (both is also acceptable)
-        if len(payload['spec']) == 0:
-            pass                      # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
+        if len(payload['spec']) == 0:  # Verify the user specified 'alg' or 'proto_ports', (both is also acceptable)
+            pass                       # Allow POST to fail, with RC=400 ["app doesn't have at least one of ProtoPorts and ALG"]
 
         if self.existing_app(params.get('app_name')):
-            pass                      # Allow POST to fail, with RC=409 ["already exists in cache"]
+            pass                       # Allow POST to fail, with RC=409 ["already exists in cache"]
 
         app = self.rate_limit('POST', url, data=json.dumps(payload))
 

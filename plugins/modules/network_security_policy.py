@@ -3,6 +3,8 @@
 #     Copyright (c) 2020 World Wide Technology, LLC
 #     All rights reserved.
 #
+#     author: Joel W. King  @joelwking
+#
 #     linter: flake8
 #         [flake8]
 #         max-line-length = 160
