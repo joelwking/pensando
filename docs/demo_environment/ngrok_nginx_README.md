@@ -5,20 +5,20 @@ The demonstration environment used an AWS EC2 instance running Ansible tower to 
 <img src="demo_topology_Ansible_Tower_laptop.png" alt="topology"/>
 
 ### Ansible Tower
-To execute the code and playbooks on Ansible Tower, version 3.6.4 with Ansible 2.9.7. 
+To execute the code and playbooks on Ansible Tower, tested with version 3.6.4 with Ansible 2.9.7. 
 
 #### /etc/ansible/ansible.cfg
 The base configuration file was modified to specify the collection and module locations:
 ```
 $ ansible-config dump --only-changed
 COLLECTIONS_PATHS(/etc/ansible/ansible.cfg) = [u'/usr/share/ansible/collections']
-DEFAULT_MODULE_PATH(/etc/ansible/ansible.cfg) = [u'/usr/share/ansible/plugins/modules', u'/usr/share/ansible']
+DEFAULT_MODULE_PATH(/etc/ansible/ansible.cfg) = [u'/usr/share/ansible/plugins/modules']
 DEFAULT_STDOUT_CALLBACK(/etc/ansible/ansible.cfg) = yaml
 DEPRECATION_WARNINGS(/etc/ansible/ansible.cfg) = False
-
 ```
-Install `tetration_application.py` in `/usr/share/ansible`. 
+Install `tetration_application.py` in `/usr/share/ansible/plugins/modules`. 
 ```bash
+cd /usr/share/ansible/plugins/modules
 sudo curl https://raw.githubusercontent.com/joelwking/ansible-tetration/master/library/tetration_application.py -o tetration_a
 pplication.py
 ```
@@ -26,6 +26,7 @@ Clone the collection into `/usr/share/ansible/collections/ansible_collections/jo
 ` - make the directories and `cd` to the file path, then clone.
 
 ```bash
+cd /usr/share/ansible/collections/ansible_collections/joelwking
 sudo git clone https://github.com/joelwking/pensando.git
 ```
 You will need to create a project and job template in Ansible Tower to execute the sample playbooks. for `playbooks/workflow_use_case.yml` these extra vars can be specified in a survey.
@@ -35,9 +36,9 @@ app_environment: dev
 app_name: PolicyPubApp
 app_version: latest
 pensando_psm:
-  host: d1fde99cd0bc.ngrok.io
-  password: '{{ psm_password }}'
-  username: admin
+  host: d1fde99cd0bc.ngrok.io                   # Specify the hostname of your PSM
+  password: '{{ psm_password }}'                # PSM password
+  username: admin                               # PSM username
 psm_password: $encrypted$
 ```
 
