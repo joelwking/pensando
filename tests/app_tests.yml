@@ -36,6 +36,7 @@
 
   collections:
     - joelwking.pensando
+    - wwt.pensando
 
   module_defaults:
     app:

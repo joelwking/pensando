@@ -3,7 +3,7 @@
 # The namespace of the collection. This can be a company/brand/organization or product namespace under which all
 # content lives. May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with
 # underscores or numbers and cannot contain consecutive underscores
-namespace: joelwking
+namespace: wwt
 
 # The name of the collection. Has the same character restrictions as 'namespace'
 name: pensando
@@ -17,7 +17,7 @@ readme: README.md
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email> (url)
 # @nicks:irc/im.site#channel'
 authors:
-- joel.king@wwt.com
+- Joel W. King joel.king@wwt.com  @joelwking
 
 
 ### OPTIONAL but strongly recommended
@@ -46,10 +46,10 @@ dependencies: {}
 repository: https://github.com/joelwking/pensando
 
 # The URL to any online docs
-documentation: http://docs.example.com
+documentation: https://github.com/joelwking/pensando
 
 # The URL to the homepage of the collection/project
-homepage: https://pensando.io
+homepage: https://github.com/joelwking/pensando
 
 # The URL to the collection issue tracker
 issues: https://github.com/joelwking/pensando/issue/tracker

@@ -131,10 +131,12 @@ import requests
 #
 from ansible.module_utils.basic import AnsibleModule
 #
-# Collection import
+# Collection import, developed under joelwking.pensando, published under wwt.pensando
 #
-import ansible_collections.joelwking.pensando.plugins.module_utils.Pensando as Pensando
-
+try:
+    import ansible_collections.joelwking.pensando.plugins.module_utils.Pensando as Pensando
+except ImportError:
+    import ansible_collections.wwt.pensando.plugins.module_utils.Pensando as Pensando
 
 def main():
     """

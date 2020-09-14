@@ -39,6 +39,7 @@
 
   collections:
     - joelwking.pensando
+    - wwt.pensando
 
   module_defaults:
     network_security_policy:

@@ -1,4 +1,4 @@
-# Ansible Collection - joelwking.pensando
+# Ansible Collection - wwt.pensando (joelwking.pensando)
 
 The Pensando PSM (Policy Services Manager) platform is a policy and services manager based on a programmable, secure microservice-based infrastructure, providing policy management and infrastructure functions.
 
@@ -51,7 +51,7 @@ These modules use the PSM API to query, delete and create/update the associated 
 * `plugins/modules/app.py` manages apps.
 * `plugins/module_utils/Pensando.py` contains Python class(s) called by modules to handle common functions.
 
-Module documentation is accessible by using `ansible-doc`,
+Module documentation is accessible by using `ansible-doc` and specify the collection namespace,
 
 ```shell
 $ ansible-doc joelwking.pensando.network_security_policy
