@@ -17,13 +17,12 @@ readme: README.md
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email> (url)
 # @nicks:irc/im.site#channel'
 authors:
-- joel.king@wwt.com
-
+- Joel W. King joel.king@wwt.com @joelwking
 
 ### OPTIONAL but strongly recommended
 
 # A short summary description of the collection
-description: Pensando Policy Services Manager (PSM) create, update, query or delete a Network Security Policy 
+description: Pensando Policy Services Manager (PSM) create, update, query or delete apps and Network Security Policy 
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
@@ -46,7 +45,7 @@ dependencies: {}
 repository: https://github.com/joelwking/pensando
 
 # The URL to any online docs
-documentation: http://docs.example.com
+documentation: https://github.com/joelwking/pensando
 
 # The URL to the homepage of the collection/project
 homepage: https://pensando.io
