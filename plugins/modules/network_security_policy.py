@@ -145,7 +145,7 @@ from ansible.module_utils.basic import AnsibleModule
 #
 # Collection import
 #
-import ansible_collections.joelwking.pensando.plugins.module_utils.Pensando as Pensando
+import ansible_collections.joelwking.pensando.plugins.module_utils.pensando as Pensando
 
 
 def main():

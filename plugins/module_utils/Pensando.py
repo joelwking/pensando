@@ -34,6 +34,7 @@ class Pensando(object):
     """
     def __init__(self, api_version=None, password=None, username=None, hostname=None, rate_limit_retry=4):
         """
+             Initialize the attributes of the class
         """
         self.rate_limit_retry = rate_limit_retry   # Number of attempts to issue the command before assuming the 429 is persistent
 

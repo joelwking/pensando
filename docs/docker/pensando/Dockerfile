@@ -19,11 +19,13 @@ RUN apt-get update && \
     apt-get install git -y && \
     apt-get install python-pip -y && \
     apt-get install python-dev -y  && \
+    apt-get install python3-pip && \
     pip install requests && \
     pip install pyopenssl  && \
     pip install pydevd  && \
     pip install tetpyclient && \
     pip install ansible-lint  && \
+    pip3 install flake8
     apt-add-repository --yes --update ppa:ansible/ansible  && \
     apt-get install ansible -y
 
